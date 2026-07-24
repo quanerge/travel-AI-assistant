@@ -1,0 +1,11 @@
+/* pages/consult/consult.wxss */
+.msg-in {
+  background: #F2F4F8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; font-size: 28rpx;
+}
+.msg-ta {
+  background: #F2F4F8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx;
+  width: 100%; box-sizing: border-box; height: 160rpx; font-size: 28rpx;
+}
+.faq { padding: 20rpx 0; border-bottom: 2rpx solid #F0F2F5; }
+.faq-q { font-weight: 600; }
+.faq-a { margin-top: 12rpx; color: var(--text-sub); font-size: 26rpx; }

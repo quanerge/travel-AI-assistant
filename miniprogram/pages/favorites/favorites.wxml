@@ -1,0 +1,15 @@
+<view class="page">
+  <view wx:if="{{list.length === 0}}" class="empty">还没有收藏的线路，去逛逛吧～</view>
+  <view class="card route-item" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+    <image class="ri-cover" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover}}" />
+    <view class="ri-cover" wx:else>{{item.destination}}</view>
+    <view class="ri-body">
+      <view class="title">{{item.name}}</view>
+      <view class="sub">{{item.departure}}出发 · {{item.days}}天</view>
+      <view class="row between" style="margin-top:8rpx;">
+        <text class="price">¥{{item.price}}</text>
+        <text class="sub">已报名 {{item.signup_count}} 人</text>
+      </view>
+    </view>
+  </view>
+</view>

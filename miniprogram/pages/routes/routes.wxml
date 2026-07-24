@@ -1,0 +1,41 @@
+<!-- pages/routes/routes.wxml -->
+<view class="page">
+  <view class="search">
+    <input placeholder="搜索目的地 / 线路名" value="{{keyword}}" bindinput="onSearch" />
+  </view>
+
+  <!-- 筛选器：天数 / 出发地 / 价格 -->
+  <view class="filters">
+    <view class="filter-row">
+      <input class="filter-input" placeholder="最少天数" type="number" value="{{filters.minDays}}" bindinput="onFilter" data-f="minDays" />
+      <input class="filter-input" placeholder="最多天数" type="number" value="{{filters.maxDays}}" bindinput="onFilter" data-f="maxDays" />
+    </view>
+    <view class="filter-row">
+      <input class="filter-input" placeholder="出发地" value="{{filters.departure}}" bindinput="onFilter" data-f="departure" />
+      <input class="filter-input" placeholder="最低价" type="digit" value="{{filters.priceMin}}" bindinput="onFilter" data-f="priceMin" />
+      <input class="filter-input" placeholder="最高价" type="digit" value="{{filters.priceMax}}" bindinput="onFilter" data-f="priceMax" />
+    </view>
+  </view>
+
+  <scroll-view scroll-x class="cats">
+    <view wx:for="{{categories}}" wx:key="*this"
+      class="cat {{activeCat === item ? 'cat-on' : ''}}" data-cat="{{item}}" bindtap="switchCat">
+      {{item}}
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{list.length === 0}}" class="empty">暂无匹配线路</view>
+
+  <view class="card route-item" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+    <image class="ri-cover" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover}}" binderror="onImgError" data-id="{{item.id}}" />
+    <view class="ri-cover" wx:else>{{item.destination}}</view>
+    <view class="ri-body">
+      <view class="title">{{item.name}}</view>
+      <view class="sub">{{item.departure}}出发 · {{item.days}}天 · {{item.category}}</view>
+      <view class="row between" style="margin-top:8rpx;">
+        <text class="price">¥{{item.price}}</text>
+        <text class="sub">已报名 {{item.signup_count}} 人</text>
+      </view>
+    </view>
+  </view>
+</view>

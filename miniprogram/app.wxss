@@ -1,0 +1,73 @@
+/* app.wxss —— 设计系统（对应页面设计文档 V1.1 §2） */
+page {
+  --primary: #2B7FFF;
+  --accent: #FF8A3D;
+  --success: #2BBF6A;
+  --danger: #FF4D4F;
+  --text: #1A1A1A;
+  --text-sub: #6B7280;
+  --bg: #F5F7FA;
+  --card: #FFFFFF;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 28rpx;
+}
+
+/* 布局 */
+.page { padding: 24rpx; box-sizing: border-box; }
+.card {
+  background: var(--card);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+}
+.row { display: flex; align-items: center; }
+.between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+.muted { color: var(--text-sub); }
+.center { text-align: center; }
+
+/* 文字 */
+.title { font-size: 34rpx; font-weight: 600; }
+.sub { font-size: 24rpx; color: var(--text-sub); }
+.price { color: var(--accent); font-weight: 700; }
+.price-sm { color: var(--accent); font-weight: 600; font-size: 24rpx; }
+
+/* 按钮 */
+.btn {
+  height: 88rpx; border-radius: 48rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30rpx; border: none;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-ghost { background: #fff; color: var(--primary); border: 2rpx solid var(--primary); }
+.btn-block { width: 100%; }
+.btn::after { border: none; }
+
+/* 标签 */
+.tag {
+  display: inline-block; padding: 4rpx 16rpx; border-radius: 8rpx;
+  font-size: 22rpx; margin-right: 12rpx; background: #EAF2FF; color: var(--primary);
+}
+.tag-accent { background: #FFF1E6; color: var(--accent); }
+.tag-success { background: #E7F8EE; color: var(--success); }
+.tag-danger { background: #FFECEC; color: var(--danger); }
+
+/* 状态标签 */
+.status {
+  display: inline-block; padding: 4rpx 16rpx; border-radius: 8rpx;
+  font-size: 22rpx; background: #EEF1F5; color: var(--text-sub);
+}
+
+/* 底部固定操作栏 */
+.footer-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; gap: 16rpx; padding: 16rpx 24rpx;
+  background: #fff; box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.06);
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+}
+
+/* 骨架/空态 */
+.empty { text-align: center; color: var(--text-sub); padding: 80rpx 0; }

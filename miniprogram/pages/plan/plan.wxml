@@ -1,0 +1,56 @@
+<!-- pages/plan/plan.wxml -->
+<view class="page">
+  <view class="card" style="background:linear-gradient(135deg,#2B7FFF,#5AA0FF);color:#fff;">
+    <view class="title" style="color:#fff;">智能行程规划</view>
+    <view class="sub" style="color:#fff;opacity:.9;">顾问 1v1 帮您规划，提交后 24h 内回执方案</view>
+  </view>
+
+  <block wx:if="{{!submitted}}">
+    <view class="card">
+      <view class="field-label">目的地</view>
+      <view class="opts">
+        <view wx:for="{{destinations}}" wx:key="*this" class="opt {{form.destination===item?'opt-on':''}}" data-field="destination" data-value="{{item}}" bindtap="pick">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field-label">时间</view>
+      <view class="opts">
+        <view wx:for="{{dayOptions}}" wx:key="*this" class="opt {{form.days===item?'opt-on':''}}" data-field="days" data-value="{{item}}" bindtap="pick">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field-label">人数</view>
+      <view class="opts">
+        <view wx:for="{{personOptions}}" wx:key="*this" class="opt {{form.person===item?'opt-on':''}}" data-field="person" data-value="{{item}}" bindtap="pick">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field-label">预算</view>
+      <view class="opts">
+        <view wx:for="{{budgetOptions}}" wx:key="*this" class="opt {{form.budget===item?'opt-on':''}}" data-field="budget" data-value="{{item}}" bindtap="pick">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field-label">兴趣（可多选）</view>
+      <view class="opts">
+        <view wx:for="{{interestList}}" wx:key="name" class="opt {{item.on?'opt-on':''}}" data-name="{{item.name}}" bindtap="toggleInterest">{{item.name}}</view>
+      </view>
+    </view>
+
+    <button class="btn btn-primary btn-block" bindtap="submit">生成行程需求单</button>
+    <view class="sub center" style="margin-top:16rpx;">AI 自动规划将于后续版本上线，当前由专属顾问为您服务</view>
+  </block>
+
+  <view wx:else class="card center" style="padding:60rpx 24rpx;">
+    <view style="font-size:64rpx;">✅</view>
+    <view class="title" style="margin:16rpx 0;">需求已提交</view>
+    <view class="sub">顾问将在 24 小时内通过微信与您联系，请留意消息</view>
+    <view wx:if="{{submitCount > 1}}" class="sub" style="margin-top:8rpx;color:#2B7FFF;">您已累计提交 {{submitCount}} 份需求</view>
+    <button class="btn btn-primary btn-block" style="margin-top:32rpx;" bindtap="submitAgain">再提交一份需求</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:16rpx;" bindtap="goHome">返回首页</button>
+  </view>
+</view>

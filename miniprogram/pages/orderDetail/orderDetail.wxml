@@ -1,0 +1,30 @@
+<!-- pages/orderDetail/orderDetail.wxml -->
+<view wx:if="{{order}}" class="page">
+  <!-- 状态步骤条 -->
+  <view class="card">
+    <view class="steps">
+      <view wx:for="{{steps}}" wx:key="*this" class="step {{stepIndex >= index ? 'step-on' : ''}}">
+        <view class="dot"></view>
+        <text class="step-label">{{statusMap[item]}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:12rpx;">订单信息</view>
+    <view class="kv"><text class="sub">订单号</text><text>{{order.order_no}}</text></view>
+    <view class="kv"><text class="sub">联系人</text><text>{{order.name}} / {{order.phone}}</text></view>
+    <view class="kv"><text class="sub">人数</text><text>{{order.person_count}} 人</text></view>
+    <view class="kv"><text class="sub">出发日期</text><text>{{order.departure_date}}</text></view>
+    <view class="kv" wx:if="{{order.remark}}"><text class="sub">备注</text><text>{{order.remark}}</text></view>
+    <view class="kv"><text class="sub">金额</text><text class="price">¥{{order.total_amount || '--'}}</text></view>
+  </view>
+
+  <!-- MVP 线下定金提示 -->
+  <view class="card" style="background:#FFF8F0;">
+    <view class="title" style="margin-bottom:8rpx;">定金支付（线下）</view>
+    <view class="sub">当前版本暂不支持在线支付。请按顾问指引通过微信转账支付定金，顾问确认收款后订单推进。</view>
+    <button class="btn btn-ghost btn-block" style="margin-top:20rpx;" bindtap="callAdvisor">联系顾问</button>
+  </view>
+</view>
+<view wx:else class="empty">加载中…</view>

@@ -1,0 +1,10 @@
+/* pages/orderDetail/orderDetail.wxss */
+.kv { display: flex; justify-content: space-between; padding: 12rpx 0; border-bottom: 2rpx solid #F4F6F9; }
+.steps { display: flex; justify-content: space-between; }
+.step { flex: 1; text-align: center; position: relative; }
+.step .dot {
+  width: 24rpx; height: 24rpx; border-radius: 50%; background: #D8DEE8; margin: 0 auto 8rpx;
+}
+.step-on .dot { background: var(--primary); }
+.step-label { font-size: 20rpx; color: var(--text-sub); }
+.step-on .step-label { color: var(--primary); }

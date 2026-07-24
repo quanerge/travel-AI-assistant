@@ -1,0 +1,46 @@
+<!-- pages/signup/signup.wxml -->
+<view class="page">
+  <view wx:if="{{route}}" class="card row">
+    <view class="ri-cover">{{route.destination}}</view>
+    <view style="margin-left:20rpx;">
+      <view class="title">{{route.name}}</view>
+      <view class="sub">{{route.departure}}出发 · {{route.days}}天 · ¥{{route.price}}/人</view>
+    </view>
+  </view>
+
+  <block wx:if="{{!submitted}}">
+    <view class="card">
+      <view class="fld"><text class="req">*</text>姓名
+        <input data-field="name" value="{{form.name}}" bindinput="input" placeholder="请输入姓名" />
+      </view>
+      <view class="fld"><text class="req">*</text>手机号
+        <input data-field="phone" value="{{form.phone}}" bindinput="input" type="number" placeholder="11位手机号" />
+      </view>
+      <view class="fld"><text class="req">*</text>人数
+        <view class="stepper">
+          <view class="step-btn" data-d="-1" bindtap="stepPerson">−</view>
+          <text class="step-num">{{form.person_count}}</text>
+          <view class="step-btn" data-d="1" bindtap="stepPerson">＋</view>
+        </view>
+      </view>
+      <view class="fld"><text class="req">*</text>出发日期
+        <picker mode="date" value="{{form.departure_date}}" bindchange="dateChange">
+          <view class="picker">{{form.departure_date || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="fld">备注
+        <input data-field="remark" value="{{form.remark}}" bindinput="input" placeholder="特殊需求（选填）" />
+      </view>
+    </view>
+
+    <button class="btn btn-accent btn-block" bindtap="submit">提交报名</button>
+    <view class="sub center" style="margin-top:16rpx;">提交后顾问将联系您确认，并引导线下支付定金</view>
+  </block>
+
+  <view wx:else class="card center" style="padding:60rpx 24rpx;">
+    <view style="font-size:64rpx;">✅</view>
+    <view class="title" style="margin:16rpx 0;">报名已提交</view>
+    <view class="sub">状态：待确认。顾问确认后请按指引支付定金（线下）</view>
+    <button class="btn btn-ghost btn-block" style="margin-top:32rpx;" bindtap="goOrders">查看我的订单</button>
+  </view>
+</view>

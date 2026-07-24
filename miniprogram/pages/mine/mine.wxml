@@ -1,0 +1,29 @@
+<!-- pages/mine/mine.wxml -->
+<view class="page">
+  <view class="card row">
+    <view class="avatar">{{userInfo ? userInfo.nickName[0] : '游'}}</view>
+    <view style="margin-left:20rpx;">
+      <view class="title">{{userInfo ? userInfo.nickName : '游客'}}</view>
+      <view class="sub">{{isLogin ? (userInfo.phone || '普通用户') : '普通用户（会员即将上线）'}}</view>
+    </view>
+  </view>
+
+  <!-- 未登录：引导注册 / 登录 -->
+  <view class="card" wx:if="{{!isLogin}}">
+    <button class="btn btn-primary btn-block" bindtap="goRegister">登录 / 注册</button>
+  </view>
+
+  <view class="card menu">
+    <view class="menu-item" bindtap="goOrders">📋 我的订单 <text class="sub">></text></view>
+    <view class="menu-item" wx:if="{{isLogin}}" bindtap="goFavorites">⭐ 我的收藏 <text class="sub">></text></view>
+    <view class="menu-item" bindtap="goPlan">🧭 智能规划 <text class="sub">></text></view>
+    <view class="menu-item" bindtap="goConsult">💬 客服中心 <text class="sub">></text></view>
+    <view class="menu-item" bindtap="goAbout">ℹ️ 关于顾问 <text class="sub">></text></view>
+    <view class="menu-item" wx:if="{{isLogin}}" bindtap="logout">🚪 退出登录 <text class="sub">></text></view>
+  </view>
+
+  <view class="card" style="background:#EAF2FF;">
+    <view class="title" style="color:var(--primary);">会员即将上线</view>
+    <view class="sub">VIP 99/年 · 高级 299/年，享不限 AI 规划、人工咨询免费等权益</view>
+  </view>
+</view>

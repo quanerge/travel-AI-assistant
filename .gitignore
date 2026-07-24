@@ -1,0 +1,42 @@
+# ===== Dependencies =====
+node_modules/
+admin/node_modules/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+server/__pycache__/
+
+# ===== Secrets / Env =====
+.env
+*.env
+server/.env
+
+# ===== Database (含真实业务数据，勿提交) =====
+*.db
+*.sqlite
+*.sqlite3
+server/lvguanjia.db
+
+# ===== Logs =====
+*.log
+server/.backend.log
+.backend.log
+
+# ===== Build output (可重建) =====
+admin/dist/
+dist/
+
+# ===== Vite cache / temp =====
+.vite/
+deps_temp*/
+*.local
+
+# ===== 本地工作记忆（含内部笔记，勿公开） =====
+.workbuddy/
+
+# ===== OS / Editor =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

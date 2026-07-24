@@ -1,0 +1,16 @@
+<!-- pages/orders/orders.wxml -->
+<view class="page">
+  <view wx:if="{{orders.length === 0}}" class="empty">还没有订单，去逛逛线路吧</view>
+
+  <view class="card" wx:for="{{orders}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+    <view class="row between">
+      <text class="title">线路 #{{item.route_id || '定制'}}</text>
+      <text class="status">{{statusMap[item.status] || item.status}}</text>
+    </view>
+    <view class="sub" style="margin:8rpx 0;">{{item.name || '行程需求'}} · {{item.person_count}}人 · {{item.departure_date}}</view>
+    <view class="row between">
+      <text class="price-sm">¥{{item.total_amount || '--'}}</text>
+      <text class="sub">{{item.order_no}}</text>
+    </view>
+  </view>
+</view>

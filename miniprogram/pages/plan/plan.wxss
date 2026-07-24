@@ -1,0 +1,9 @@
+/* pages/plan/plan.wxss */
+.field-label { font-weight: 600; margin-bottom: 16rpx; }
+.opts { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.opt {
+  padding: 12rpx 28rpx; background: #F2F4F8; border-radius: 48rpx;
+  font-size: 26rpx; color: var(--text-sub);
+  display: flex; align-items: center; justify-content: center;
+}
+.opt-on { background: var(--primary); color: #fff; }

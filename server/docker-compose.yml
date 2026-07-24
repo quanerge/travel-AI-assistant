@@ -1,0 +1,30 @@
+# 旅途管家后端 - 容器编排（后端 + MySQL）
+# 用法：
+#   cp .env.example .env   # 按需修改
+#   docker compose up -d --build
+#   容器起来后初始化演示数据：docker compose exec api python seed.py
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=lvguanjia
+      - MYSQL_USER=lv
+      - MYSQL_PASSWORD=lv123
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  db_data:

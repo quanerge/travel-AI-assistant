@@ -1,0 +1,18 @@
+.about-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 24rpx;
+}
+.avatar-lg {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  background: #2B7FFF;
+  color: #fff;
+  font-size: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
