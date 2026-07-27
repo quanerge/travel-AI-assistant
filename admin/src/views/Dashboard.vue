@@ -1,5 +1,33 @@
 <template>
   <div v-loading="loading">
+    <!-- 生日 / 纪念日关怀提醒 -->
+    <el-alert
+      v-if="birthdayReminders.length"
+      class="birthday-alert"
+      :closable="false"
+      type="warning"
+      show-icon
+    >
+      <template #title>
+        <span class="ba-title">🎂 生日关怀提醒（{{ birthdayReminders.length }} 位客户）</span>
+      </template>
+      <div class="ba-list">
+        <span
+          v-for="b in birthdayReminders"
+          :key="b.customer_id"
+          class="ba-chip"
+          @click="goCustomers"
+        >
+          <b>{{ b.name }}</b>
+          <span class="ba-when" :class="b.offset === 0 ? 'is-today' : ''">
+            {{ b.offset === 0 ? '今天生日' : '明天生日' }}
+          </span>
+          <span class="ba-date">{{ b.birthday }}</span>
+        </span>
+      </div>
+      <div class="ba-tip">点击客户可前往「客户管理」发送生日祝福或专属优惠</div>
+    </el-alert>
+
     <!-- 指标卡 -->
     <el-row :gutter="16">
       <el-col :span="6">
@@ -90,8 +118,10 @@ const loading = ref(true)
 const d = ref({
   today_orders: 0, month_income: 0, profit: 0, customer_growth: 0,
   active_routes: 0, pending_confirm_orders: 0, pending_deposit_orders: 0,
-  top_routes: [], order_trend: []
+  top_routes: [], order_trend: [], birthday_reminders: []
 })
+
+const birthdayReminders = computed(() => d.value.birthday_reminders || [])
 
 const money = (v) => (v == null ? '0.00' : Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const top = computed(() => d.value.top_routes || [])
@@ -115,6 +145,7 @@ const trend = computed(() => {
 const trendMax = computed(() => Math.max(1, ...trend.value.map(p => p.count)))
 
 const goOrders = () => router.push('/orders')
+const goCustomers = () => router.push('/customers')
 
 onMounted(async () => {
   try {
@@ -131,6 +162,19 @@ onMounted(async () => {
 .stat-card { text-align: center; }
 .stat-label { color: #888; font-size: 13px; }
 .stat-num { font-size: 30px; font-weight: 700; margin-top: 6px; color: #2b7fff; }
+.birthday-alert { margin-bottom: 16px; }
+.ba-title { font-weight: 700; }
+.ba-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.ba-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff7e6; border: 1px solid #ffd591; border-radius: 16px;
+  padding: 4px 12px; font-size: 13px; cursor: pointer; transition: .2s;
+}
+.ba-chip:hover { background: #ffe7ba; }
+.ba-when { color: #fa8c16; font-weight: 600; }
+.ba-when.is-today { color: #f5222d; }
+.ba-date { color: #999; }
+.ba-tip { color: #999; font-size: 12px; margin-top: 8px; }
 .todo-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 12px 0; border-bottom: 1px solid #f2f2f2; cursor: pointer;

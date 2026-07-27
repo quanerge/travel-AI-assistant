@@ -30,6 +30,10 @@ const api = {
   registerCustomer(payload) {
     return useMock ? mock.registerCustomer(payload) : request('/customers/register', 'POST', payload)
   },
+  // 更新客户资料（小程序"我的"页编辑生日等）
+  updateCustomer(customerId, payload) {
+    return useMock ? mock.updateCustomer(customerId, payload) : request('/customers/' + customerId, 'PUT', payload)
+  },
   // 微信静默登录（wx.login code -> openid）
   wxLogin(payload) {
     return useMock ? mock.wxLogin(payload) : request('/auth/wx-login', 'POST', payload)

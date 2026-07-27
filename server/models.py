@@ -29,6 +29,7 @@ class Customer(Base):
     source = Column(String(32), nullable=True)
     travel_preference = Column(String(128), nullable=True)
     budget_range = Column(String(32), nullable=True)
+    birthday = Column(String(32), nullable=True)             # 生日/纪念日，存 "MM-DD"，用于提醒
     tags = Column(String(255), nullable=True)
     remark = Column(Text, nullable=True)                       # 顾问备注
     follow_status = Column(String(16), default="pending_follow")  # pending_follow/contacting/deal/lost

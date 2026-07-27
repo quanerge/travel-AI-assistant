@@ -26,6 +26,12 @@
       <text class="label">预算区间</text>
       <input class="input" placeholder="选填，如：3000-5000" value="{{form.budget_range}}" data-field="budget_range" bindinput="input" />
     </view>
+    <picker mode="date" value="{{form.birthday}}" start="1950-01-01" end="2015-12-31" bindchange="onBirthdayChange">
+      <view class="field">
+        <text class="label">生日</text>
+        <view class="input picker-text">{{form.birthday || '选填，用于生日关怀提醒'}}</view>
+      </view>
+    </picker>
   </view>
 
   <button class="btn btn-primary btn-block" loading="{{submitting}}" bindtap="submit">注册并登录</button>

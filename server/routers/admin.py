@@ -9,6 +9,7 @@ from database import get_db
 from models import AdminUser, Order, Route, Customer
 from schemas import AdminLogin, AdminLoginOut
 from routers.auth import create_token, verify_password, migrate_password, get_current_admin
+from routers.customers import birthday_match
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -73,6 +74,21 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
     pending_confirm = db.query(Order).filter(Order.status == "pending_confirm").count()
     pending_deposit = db.query(Order).filter(Order.status == "pending_deposit").count()
 
+    # 生日/纪念日提醒：今天 + 明天过生日的客户（offset 0=今天, 1=明天）
+    birthday_reminders = []
+    for c in db.query(Customer).filter(Customer.birthday.isnot(None)).all():
+        off = birthday_match(c.birthday, today, 1)
+        if off is not None:
+            birthday_reminders.append({
+                "customer_id": c.id,
+                "name": c.name,
+                "phone": c.phone,
+                "wechat_no": c.wechat_no,
+                "birthday": c.birthday,
+                "offset": off,
+            })
+    birthday_reminders.sort(key=lambda x: x["offset"])
+
     return {
         "today_orders": today_orders,
         "month_income": round(month_income, 2),
@@ -83,4 +99,5 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
         "order_trend": trend_list,
         "pending_confirm_orders": pending_confirm,
         "pending_deposit_orders": pending_deposit,
+        "birthday_reminders": birthday_reminders,
     }

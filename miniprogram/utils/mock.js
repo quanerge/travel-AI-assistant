@@ -49,6 +49,8 @@ const banners = [
 let orderSeq = 1000
 const orders = []
 const favSet = new Set()  // key: `${user_id}:${route_id}`
+// 本地记忆已注册客户：模拟后端把客户与微信 openid 绑定（实现退出后自动恢复）
+const mockCustomers = []  // { userId, customerId, nickName, phone, openid }
 
 function getRoutes() { return Promise.resolve(routes) }
 function getRouteDetail(id) {
@@ -74,11 +76,50 @@ function submitConsult(payload) {
   return Promise.resolve(Object.assign({ id: ++orderSeq, status: 'pending_confirm' }, payload))
 }
 function registerCustomer(payload) {
-  const user = { userId: 1, customerId: 1, nickName: payload.nickname || '新客户', phone: payload.phone || '' }
-  return Promise.resolve(user)
+  const openid = payload.openid || ''
+  // 按手机号或 openid 去重，模拟幂等注册
+  let c = mockCustomers.find(x => (payload.phone && x.phone === payload.phone) || (openid && x.openid === openid))
+  if (c) {
+    return Promise.resolve({ userId: c.userId, customerId: c.customerId, nickName: c.nickName, phone: c.phone, birthday: c.birthday, wechat_no: c.wechat_no, already_registered: true })
+  }
+  c = {
+    userId: mockCustomers.length + 1,
+    customerId: mockCustomers.length + 1,
+    nickName: payload.nickname || '新客户',
+    phone: payload.phone || '',
+    openid: openid,
+    birthday: payload.birthday || '',
+    wechat_no: payload.wechat_no || ''
+  }
+  mockCustomers.push(c)
+  return Promise.resolve({ userId: c.userId, customerId: c.customerId, nickName: c.nickName, phone: c.phone, birthday: c.birthday, wechat_no: c.wechat_no, already_registered: false })
 }
 function wxLogin(payload) {
-  return Promise.resolve({ userId: 1, openid: payload.code })
+  const openid = payload.openid || payload.code
+  // 若此微信身份已注册过客户，返回客户信息，前端据此自动恢复登录态
+  const c = mockCustomers.find(x => x.openid && x.openid === openid)
+  if (c) {
+    return Promise.resolve({ userId: c.userId, openid: openid, customer_id: c.customerId, nickname: c.nickName, phone: c.phone, birthday: c.birthday, wechat_no: c.wechat_no })
+  }
+  return Promise.resolve({ userId: 1, openid: openid })
+}
+// 小程序"我的"页编辑资料（如生日/手机/微信）：按 customerId 更新本地记忆
+function updateCustomer(customerId, payload) {
+  const c = mockCustomers.find(x => x.customerId === Number(customerId))
+  if (c) {
+    if (payload.birthday !== undefined) c.birthday = payload.birthday
+    if (payload.wechat_no !== undefined) c.wechat_no = payload.wechat_no
+    if (payload.phone !== undefined) c.phone = payload.phone
+    if (payload.name !== undefined) c.nickName = payload.name
+  }
+  const out = c || {}
+  return Promise.resolve({
+    customerId: customerId,
+    birthday: payload.birthday !== undefined ? payload.birthday : (out.birthday || ''),
+    wechat_no: payload.wechat_no !== undefined ? payload.wechat_no : (out.wechat_no || ''),
+    phone: payload.phone !== undefined ? payload.phone : (out.phone || ''),
+    name: payload.name !== undefined ? payload.name : (out.nickName || '')
+  })
 }
 function toggleFavorite(payload) {
   const key = payload.user_id + ':' + payload.route_id
@@ -97,5 +138,5 @@ function getFavorites(user_id) {
 module.exports = {
   getRoutes, getRouteDetail, getBanners, submitSignup, submitPlan,
   getOrders, getOrderDetail, submitConsult, registerCustomer,
-  wxLogin, toggleFavorite, getFavorites, routes
+  wxLogin, updateCustomer, toggleFavorite, getFavorites, routes
 }

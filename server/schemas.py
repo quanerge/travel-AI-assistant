@@ -158,6 +158,7 @@ class CustomerOut(BaseModel):
     source: Optional[str] = None
     travel_preference: Optional[str] = None
     budget_range: Optional[str] = None
+    birthday: Optional[str] = None
     tags: Optional[str] = None
     last_trip: Optional[str] = None
     remark: Optional[str] = None
@@ -174,6 +175,7 @@ class CustomerCreate(BaseModel):
     source: Optional[str] = None
     travel_preference: Optional[str] = None
     budget_range: Optional[str] = None
+    birthday: Optional[str] = None
     tags: Optional[str] = None
     remark: Optional[str] = None
     follow_status: Optional[str] = "pending_follow"
@@ -186,6 +188,7 @@ class CustomerUpdate(BaseModel):
     source: Optional[str] = None
     travel_preference: Optional[str] = None
     budget_range: Optional[str] = None
+    birthday: Optional[str] = None
     tags: Optional[str] = None
     remark: Optional[str] = None
     follow_status: Optional[str] = None
@@ -198,6 +201,8 @@ class CustomerRegister(BaseModel):
     wechat_no: Optional[str] = None
     travel_preference: Optional[str] = None
     budget_range: Optional[str] = None
+    birthday: Optional[str] = None  # 生日，存 "MM-DD"，用于生日关怀提醒
+    openid: Optional[str] = None  # 微信身份，用于关联客户与静默登录，实现退出后自动恢复
 
 
 class RegisterOut(BaseModel):
@@ -206,6 +211,8 @@ class RegisterOut(BaseModel):
     customer_id: int
     nickname: str
     phone: str
+    birthday: Optional[str] = None
+    wechat_no: Optional[str] = None
     already_registered: bool = False
 
 

@@ -1,0 +1,13 @@
+/* pages/profile/profile.wxss */
+.form-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28rpx 0; border-bottom: 2rpx solid #F0F2F5; font-size: 30rpx;
+}
+.form-item:last-child { border-bottom: none; }
+.form-item .label { color: var(--text-sub); width: 160rpx; flex-shrink: 0; }
+.form-item .input {
+  flex: 1; text-align: right; color: var(--text); font-size: 30rpx;
+}
+.form-item .input.placeholder { color: #B6BCC6; }
+.form-item--picker { padding-right: 0; }
+.arrow { color: #B6BCC6; margin-left: 8rpx; }

@@ -10,3 +10,26 @@
   padding: 28rpx 0; border-bottom: 2rpx solid #F0F2F5; font-size: 30rpx;
 }
 .menu-item:last-child { border-bottom: none; }
+
+/* 生日卡片：默认样式 + 临近生日高亮 */
+.birthday-card {
+  display: flex; align-items: center;
+  padding: 28rpx 24rpx; gap: 20rpx;
+  background: #FFF7ED; border: 2rpx solid #FFE0B2; border-radius: 16rpx;
+}
+.birthday-card--soon {
+  background: linear-gradient(135deg, #FFE0EC 0%, #FFF3C4 100%);
+  border-color: #FFB3C8;
+  box-shadow: 0 6rpx 24rpx rgba(255, 99, 146, 0.25);
+  animation: birthdayPulse 1.6s ease-in-out infinite;
+}
+@keyframes birthdayPulse {
+  0% { box-shadow: 0 6rpx 24rpx rgba(255, 99, 146, 0.18); }
+  50% { box-shadow: 0 10rpx 30rpx rgba(255, 99, 146, 0.38); }
+  100% { box-shadow: 0 6rpx 24rpx rgba(255, 99, 146, 0.18); }
+}
+.birthday-emoji { font-size: 56rpx; line-height: 1; }
+.birthday-body { flex: 1; }
+.birthday-title { font-size: 32rpx; font-weight: 700; color: #C2410C; }
+.birthday-card--soon .birthday-title { color: #D6336C; }
+.birthday-sub { font-size: 24rpx; color: #9A6A4B; margin-top: 6rpx; }

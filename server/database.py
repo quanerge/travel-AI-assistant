@@ -33,6 +33,7 @@ def migrate():
         ("customer", "remark", "TEXT"),
         ("customer", "follow_status", "VARCHAR(16)"),
         ("customer", "last_contact_at", "DATETIME"),
+        ("customer", "birthday", "VARCHAR(32)"),
         ("consult_record", "name", "VARCHAR(64)"),
         ("consult_record", "phone", "VARCHAR(32)"),
     ]

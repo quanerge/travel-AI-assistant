@@ -26,6 +26,7 @@
       <el-table-column prop="name" label="客户" width="110" />
       <el-table-column prop="wechat_no" label="微信号" width="130" />
       <el-table-column prop="phone" label="手机" width="130" />
+      <el-table-column prop="birthday" label="生日" width="90" />
       <el-table-column prop="source" label="来源" width="100" />
       <el-table-column prop="tags" label="标签" width="120" />
       <el-table-column prop="total_orders" label="订单数" width="80" />
@@ -73,6 +74,15 @@
         </el-form-item>
         <el-form-item label="预算区间">
           <el-input v-model="form.budget_range" />
+        </el-form-item>
+        <el-form-item label="生日">
+          <el-date-picker
+            v-model="form.birthday"
+            type="date"
+            value-format="MM-DD"
+            placeholder="选填，用于生日关怀提醒"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="标签">
           <el-input v-model="form.tags" placeholder="逗号分隔，如：高净值,亲子" />
@@ -142,7 +152,7 @@ const form = ref(blankForm())
 function blankForm() {
   return {
     name: '', wechat_no: '', phone: '', source: '',
-    travel_preference: '', budget_range: '', tags: '', remark: '',
+    travel_preference: '', budget_range: '', birthday: '', tags: '', remark: '',
     follow_status: 'pending_follow'
   }
 }

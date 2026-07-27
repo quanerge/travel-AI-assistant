@@ -2,15 +2,43 @@
 const app = getApp()
 
 Page({
-  data: { userInfo: null, isLogin: false },
+  data: {
+    userInfo: null, isLogin: false,
+    birthday: '', birthdayTip: '', birthdaySoon: false
+  },
 
   onShow() {
+    const ui = app.globalData.userInfo
+    const birthday = (ui && ui.birthday) || ''
+    const off = this._birthdayOffset(birthday)
+    let tip = ''
+    let soon = false
+    if (off === 0) { tip = '🎉 今天是你的生日！'; soon = true }
+    else if (off === 1) { tip = '🎂 明天是你的生日'; soon = true }
     this.setData({
-      userInfo: app.globalData.userInfo,
-      isLogin: app.globalData.isLogin
+      userInfo: ui,
+      isLogin: app.globalData.isLogin,
+      birthday,
+      birthdayTip: tip,
+      birthdaySoon: soon
     })
   },
 
+  // 计算生日相对今天的偏移：0=今天, 1=明天, -1=非临近
+  _birthdayOffset(mmdd) {
+    if (!mmdd || mmdd.length !== 5) return -1
+    const now = new Date()
+    for (let i = 0; i <= 1; i++) {
+      const d = new Date(now.getTime())
+      d.setDate(now.getDate() + i)
+      const m = ('0' + (d.getMonth() + 1)).slice(-2)
+      const day = ('0' + d.getDate()).slice(-2)
+      if ((m + '-' + day) === mmdd) return i
+    }
+    return -1
+  },
+
+  goProfile() { wx.navigateTo({ url: '/pages/profile/profile' }) },
   goRegister() { wx.navigateTo({ url: '/pages/register/register' }) },
   goOrders() { wx.navigateTo({ url: '/pages/orders/orders' }) },
   goConsult() { wx.navigateTo({ url: '/pages/consult/consult' }) },
@@ -25,7 +53,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           app.logout()
-          this.setData({ userInfo: null, isLogin: false })
+          this.setData({ userInfo: null, isLogin: false, birthday: '', birthdayTip: '', birthdaySoon: false })
           wx.showToast({ title: '已退出登录', icon: 'none' })
         }
       }

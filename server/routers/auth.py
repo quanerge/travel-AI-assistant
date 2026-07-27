@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from database import get_db
-from models import AdminUser, User
+from models import AdminUser, User, Customer
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -74,8 +74,9 @@ def get_current_admin(cred: HTTPAuthorizationCredentials = Depends(_bearer),
 
 # ---------- 路由 ----------
 class WxLoginIn(BaseModel):
-    code: str
+    code: str = None
     nickname: str = None
+    openid: str = None  # 客户端复用的稳定 openid（首次由 code 派生后存本地），优先于 code
 
 
 @router.post("/wx-login")
@@ -84,17 +85,32 @@ def wx_login(payload: WxLoginIn, db: Session = Depends(get_db)):
 
     MVP 说明：真实环境应拿 code 调微信 jscode2session 换 openid+session_key；
     这里以 code 直接作为 openid 兜底（演示可用），上线时替换为微信接口返回。
+
+    若客户端已持有上次登录派生的 openid（存本地复用），优先用 openid 定位用户，
+    保证跨启动身份稳定。找到用户后顺带查出其注册客户，返回 customer 信息，
+    供前端在退出后重新打开时自动恢复登录态，无需再次注册。
     """
-    if not payload.code:
-        raise HTTPException(status_code=400, detail="缺少 code")
-    openid = payload.code  # TODO(上线): openid = wechat_jscode2session(code)["openid"]
+    openid = payload.openid or payload.code
+    if not openid:
+        raise HTTPException(status_code=400, detail="缺少 code 或 openid")
+    # TODO(上线): openid = wechat_jscode2session(code)["openid"]
     user = db.query(User).filter(User.openid == openid).first()
     if not user:
         user = User(openid=openid, nickname=payload.nickname or "微信用户", status="active")
         db.add(user)
         db.commit()
         db.refresh(user)
-    return {"user_id": user.id, "openid": user.openid}
+
+    # 关联客户：若此微信用户已完成小程序注册，返回客户信息以支持自动恢复登录
+    result = {"user_id": user.id, "openid": user.openid}
+    cust = db.query(Customer).filter(Customer.user_id == user.id).first()
+    if cust:
+        result["customer_id"] = cust.id
+        result["nickname"] = cust.name
+        result["phone"] = cust.phone
+        result["birthday"] = cust.birthday
+        result["wechat_no"] = cust.wechat_no
+    return result
 
 
 @router.get("/me")

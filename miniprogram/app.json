@@ -11,7 +11,8 @@
     "pages/register/register",
     "pages/consult/consult",
     "pages/favorites/favorites",
-    "pages/about/about"
+    "pages/about/about",
+    "pages/profile/profile"
   ],
   "window": {
     "backgroundTextStyle": "light",
