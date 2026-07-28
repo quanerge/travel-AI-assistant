@@ -42,12 +42,12 @@ const api = {
   getBanners() {
     return useMock ? mock.getBanners() : request('/banners')
   },
-  // 收藏切换 / 列表
+  // 收藏切换 / 列表（身份由请求头 JWT 决定，无需传 user_id）
   toggleFavorite(payload) {
     return useMock ? mock.toggleFavorite(payload) : request('/favorites', 'POST', payload)
   },
-  getFavorites(user_id) {
-    return useMock ? mock.getFavorites(user_id) : request('/favorites?user_id=' + user_id)
+  getFavorites() {
+    return useMock ? mock.getFavorites() : request('/favorites')
   }
 }
 

@@ -122,16 +122,14 @@ function updateCustomer(customerId, payload) {
   })
 }
 function toggleFavorite(payload) {
-  const key = payload.user_id + ':' + payload.route_id
+  const key = String(payload.route_id)
   let favorited
   if (favSet.has(key)) { favSet.delete(key); favorited = false }
   else { favSet.add(key); favorited = true }
   return Promise.resolve({ favorited })
 }
-function getFavorites(user_id) {
-  const ids = [...favSet]
-    .filter(k => k.indexOf(user_id + ':') === 0)
-    .map(k => Number(k.split(':')[1]))
+function getFavorites() {
+  const ids = [...favSet].map(k => Number(k))
   return Promise.resolve(routes.filter(r => ids.indexOf(r.id) >= 0))
 }
 

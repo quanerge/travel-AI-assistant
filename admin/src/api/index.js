@@ -53,7 +53,18 @@ export const api = {
   addFollowUp: (id, content) => http.post(`/customers/${id}/follow-ups`, { content }),
 
   listConsults: () => http.get('/consult'),
-  getMe: () => http.get('/auth/me')
+  getMe: () => http.get('/auth/me'),
+
+  // 系统设置
+  getSettings: () => http.get('/admin/settings'),
+
+  // 用户管理（仅超管）
+  listUsers: () => http.get('/admin/users'),
+  createUser: (data) => http.post('/admin/users', data),
+  resetUserPassword: (id, password) => http.put(`/admin/users/${id}/password`, { password }),
+  updateUserRole: (id, role) => http.put(`/admin/users/${id}/role`, { role }),
+  updateUserStatus: (id, status) => http.put(`/admin/users/${id}/status`, { status }),
+  deleteUser: (id) => http.delete(`/admin/users/${id}`)
 }
 
 export default http

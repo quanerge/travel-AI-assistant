@@ -8,6 +8,7 @@ from schemas import (
     CustomerOut, CustomerCreate, CustomerUpdate,
     FollowUpOut, FollowUpCreate, CustomerRegister, RegisterOut
 )
+from utils.crypto import encrypt_phone, decrypt_phone
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
@@ -54,7 +55,7 @@ def upsert_customer_from_contact(db: Session, name: str = None, phone: str = Non
 
     cust = None
     if phone:
-        cust = db.query(Customer).filter(Customer.phone == phone).first()
+        cust = db.query(Customer).filter(Customer.phone == encrypt_phone(phone)).first()
     if not cust and name:
         cust = db.query(Customer).filter(Customer.name == name).first()
 
@@ -71,7 +72,7 @@ def upsert_customer_from_contact(db: Session, name: str = None, phone: str = Non
     else:
         cust = Customer(
             name=name or "未知客户",
-            phone=phone,
+            phone=encrypt_phone(phone),
             source=source,
             total_orders=order_count,
             total_amount=order_amount,
@@ -111,7 +112,7 @@ def birthday_reminders(days: int = 1, db: Session = Depends(get_db)):
             result.append({
                 "customer_id": c.id,
                 "name": c.name,
-                "phone": c.phone,
+                "phone": decrypt_phone(c.phone),
                 "wechat_no": c.wechat_no,
                 "birthday": c.birthday,
                 "offset": off,
@@ -124,7 +125,9 @@ def birthday_reminders(days: int = 1, db: Session = Depends(get_db)):
 @router.post("", response_model=CustomerOut)
 def create_customer(payload: CustomerCreate, db: Session = Depends(get_db)):
     """后台手动录入客户。"""
-    cust = Customer(**payload.model_dump())
+    data = payload.model_dump()
+    data["phone"] = encrypt_phone(data.get("phone"))
+    cust = Customer(**data)
     db.add(cust)
     db.commit()
     db.refresh(cust)
@@ -148,7 +151,7 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
     if payload.birthday and not birthday:
         raise HTTPException(400, "生日格式应为 MM-DD（如 03-15）")
 
-    existing = db.query(Customer).filter(Customer.phone == payload.phone).first()
+    existing = db.query(Customer).filter(Customer.phone == encrypt_phone(payload.phone)).first()
     if existing:
         # 已注册：补绑定 openid（若缺失），便于后续静默登录找回
         if payload.openid and existing.user_id:
@@ -164,7 +167,7 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
             user_id=existing.user_id or 0,
             customer_id=existing.id,
             nickname=existing.name,
-            phone=existing.phone,
+            phone=decrypt_phone(existing.phone),
             birthday=existing.birthday,
             wechat_no=existing.wechat_no,
             already_registered=True,
@@ -172,7 +175,7 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
 
     user = User(
         nickname=payload.nickname,
-        phone=payload.phone,
+        phone=encrypt_phone(payload.phone),
         openid=payload.openid,
         status="active",
     )
@@ -183,7 +186,7 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
     cust = Customer(
         user_id=user.id,
         name=payload.nickname,
-        phone=payload.phone,
+        phone=encrypt_phone(payload.phone),
         wechat_no=payload.wechat_no,
         source="miniprogram",
         travel_preference=payload.travel_preference,
@@ -199,7 +202,7 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
         user_id=user.id,
         customer_id=cust.id,
         nickname=user.nickname,
-        phone=user.phone,
+        phone=decrypt_phone(user.phone),
         birthday=cust.birthday,
         wechat_no=cust.wechat_no,
         already_registered=False,
@@ -213,6 +216,8 @@ def update_customer(customer_id: int, payload: CustomerUpdate, db: Session = Dep
     if not cust:
         raise HTTPException(404, "客户不存在")
     for k, v in payload.model_dump(exclude_unset=True).items():
+        if k == "phone" and v is not None:
+            v = encrypt_phone(v)
         setattr(cust, k, v)
     db.commit()
     db.refresh(cust)

@@ -5,39 +5,42 @@ from pydantic import BaseModel
 
 from database import get_db
 from models import Favorite, Route
+from routers.auth import get_current_user
+from models import User
 
 router = APIRouter(prefix="/api/favorites", tags=["favorites"])
 
 
 class FavoriteIn(BaseModel):
-    user_id: int = None
     route_id: int
 
 
 @router.post("")
-def toggle_favorite(payload: FavoriteIn, db: Session = Depends(get_db)):
-    """收藏/取消收藏切换。返回 favorited 表示当前是否已收藏。"""
-    if not payload.user_id:
-        raise HTTPException(status_code=400, detail="缺少 user_id")
+def toggle_favorite(payload: FavoriteIn,
+                    current_user: User = Depends(get_current_user),
+                    db: Session = Depends(get_db)):
+    """收藏/取消收藏切换。返回 favorited 表示当前是否已收藏。
+
+    需用户 JWT：identity 取自 token，避免越权操作他人收藏。
+    """
     existing = db.query(Favorite).filter(
-        Favorite.user_id == payload.user_id, Favorite.route_id == payload.route_id
+        Favorite.user_id == current_user.id, Favorite.route_id == payload.route_id
     ).first()
     if existing:
         db.delete(existing)
         db.commit()
         return {"favorited": False}
-    f = Favorite(user_id=payload.user_id, route_id=payload.route_id)
+    f = Favorite(user_id=current_user.id, route_id=payload.route_id)
     db.add(f)
     db.commit()
     return {"favorited": True}
 
 
 @router.get("")
-def list_favorites(user_id: int = None, db: Session = Depends(get_db)):
-    """返回该用户收藏的线路列表（供「我的收藏」展示）。"""
-    if not user_id:
-        return []
-    favs = db.query(Favorite).filter(Favorite.user_id == user_id).all()
+def list_favorites(current_user: User = Depends(get_current_user),
+                  db: Session = Depends(get_db)):
+    """返回当前用户收藏的线路列表（供「我的收藏」展示）。"""
+    favs = db.query(Favorite).filter(Favorite.user_id == current_user.id).all()
     route_ids = [f.route_id for f in favs]
     if not route_ids:
         return []

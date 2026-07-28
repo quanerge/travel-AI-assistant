@@ -4,6 +4,7 @@ App({
     userInfo: null,
     openid: null,
     userId: null,
+    userToken: null,
     isLogin: false
   },
 
@@ -15,11 +16,14 @@ App({
       this.globalData.openid = cached.openid || null
       this.globalData.userId = cached.userId || null
     }
+    // 恢复用户 JWT（鉴权用）
+    const token = wx.getStorageSync('userToken')
+    if (token) this.globalData.userToken = token
     // 微信静默登录：拿 code 换 openid，打通后端用户（MVP 兜底实现）
     this.wxLoginSilent()
   },
 
-  // 静默登录：wx.login 取 code -> 后端 /api/auth/wx-login -> 存 openid/userId
+  // 静默登录：wx.login 取 code -> 后端 /api/auth/wx-login -> 存 openid/userId/token
   // 关键修复：复用本地持久化 openid（保证跨启动身份稳定），若后端返回关联客户则自动恢复登录态，
   // 这样用户退出后再打开小程序无需重新注册即可自动登录。
   wxLoginSilent() {
@@ -35,6 +39,11 @@ App({
           this.globalData.userId = r.userId || r.user_id
           // 持久化 openid，下次启动复用，保证身份稳定
           wx.setStorageSync('openid', r.openid)
+          // 持久化用户 JWT，后续收藏等接口携带鉴权
+          if (r.token) {
+            this.globalData.userToken = r.token
+            wx.setStorageSync('userToken', r.token)
+          }
           if (r.customer_id) {
             // 该微信身份已注册过客户 -> 自动恢复登录态，无需重新注册
             this.login({
@@ -63,14 +72,20 @@ App({
     this.globalData.isLogin = true
     if (userInfo.openid) this.globalData.openid = userInfo.openid
     if (userInfo.userId) this.globalData.userId = userInfo.userId
+    if (userInfo.token) {
+      this.globalData.userToken = userInfo.token
+      wx.setStorageSync('userToken', userInfo.token)
+    }
     wx.setStorageSync('userInfo', userInfo)
   },
 
-  // 退出登录：清除本地登录态（微信身份 openid 仍保留，下次启动静默登录自动恢复）
+  // 退出登录：清除本地登录态（微信身份 openid 与 userToken 仍保留，下次启动静默登录自动恢复）
   logout() {
     this.globalData.userInfo = null
     this.globalData.isLogin = false
     this.globalData.userId = null
     wx.removeStorageSync('userInfo')
+    wx.removeStorageSync('userToken')
+    this.globalData.userToken = null
   }
 })

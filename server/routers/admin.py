@@ -1,15 +1,17 @@
 # server/routers/admin.py
+import os
 from datetime import datetime, timedelta
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from database import get_db
+from database import get_db, DATABASE_URL
 from models import AdminUser, Order, Route, Customer
 from schemas import AdminLogin, AdminLoginOut
 from routers.auth import create_token, verify_password, migrate_password, get_current_admin
 from routers.customers import birthday_match
+from utils.crypto import decrypt_phone
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -82,7 +84,7 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
             birthday_reminders.append({
                 "customer_id": c.id,
                 "name": c.name,
-                "phone": c.phone,
+                "phone": decrypt_phone(c.phone),
                 "wechat_no": c.wechat_no,
                 "birthday": c.birthday,
                 "offset": off,
@@ -100,4 +102,23 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
         "pending_confirm_orders": pending_confirm,
         "pending_deposit_orders": pending_deposit,
         "birthday_reminders": birthday_reminders,
+    }
+
+
+@router.get("/settings")
+def settings(admin: AdminUser = Depends(get_current_admin)):
+    """系统设置：返回环境/安全配置状态，供后台「系统设置」页展示。
+
+    仅返回布尔/摘要，绝不回显密钥明文。
+    """
+    jwt_secret = os.getenv("JWT_SECRET", "")
+    phone_key = os.getenv("PHONE_ENCRYPT_KEY", "")
+    raw_origins = os.getenv("CORS_ORIGINS", "*")
+    return {
+        "version": "1.3",
+        "db_type": "mysql" if DATABASE_URL.startswith("mysql") else "sqlite",
+        "jwt_secret_configured": bool(jwt_secret) and jwt_secret != "lvguanjia-dev-secret",
+        "phone_key_configured": bool(phone_key) and phone_key != "lvguanjia-dev-phone-secret-change-me",
+        "cors_policy": "开放(*)" if raw_origins == "*" else "受限白名单",
+        "current_role": admin.role,
     }

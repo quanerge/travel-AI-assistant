@@ -11,7 +11,7 @@ Page({
   load() {
     const uid = app.globalData.userId
     if (!uid) { this.setData({ list: [] }); return }
-    api.getFavorites(uid).then(list => {
+    api.getFavorites().then(list => {
       this.setData({ list: list.map(x => Object.assign({}, x, { cover: resolveCover(x.cover) })) })
     }).catch(() => {})
   },

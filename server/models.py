@@ -167,6 +167,7 @@ class AdminUser(Base):
     password_hash = Column(String(128))
     role = Column(String(16), default="advisor")  # advisor / super
     phone = Column(String(32), nullable=True)
+    status = Column(String(16), default="active")  # active / disabled
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

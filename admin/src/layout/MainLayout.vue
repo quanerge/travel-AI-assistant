@@ -16,6 +16,8 @@
         <el-menu-item index="/revenue"><el-icon><Money /></el-icon>收益管理</el-menu-item>
         <el-menu-item index="/banners"><el-icon><Picture /></el-icon>Banner 管理</el-menu-item>
         <el-menu-item index="/consults"><el-icon><ChatDotRound /></el-icon>智能需求单</el-menu-item>
+        <el-menu-item v-if="isSuper" index="/users"><el-icon><UserFilled /></el-icon>用户管理</el-menu-item>
+        <el-menu-item index="/settings"><el-icon><Setting /></el-icon>系统设置</el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -43,12 +45,14 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { auth } from '../store/auth'
 import {
-  DataLine, MapLocation, Tickets, User, Money, ChatDotRound, Picture
+  DataLine, MapLocation, Tickets, User, Money, ChatDotRound, Picture,
+  UserFilled, Setting
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const admin = auth.get()
+const isSuper = computed(() => admin?.role === 'super')
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title || '')
 const onCommand = (c) => {

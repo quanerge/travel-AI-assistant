@@ -3,6 +3,7 @@ import json
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import datetime
+from utils.crypto import decrypt_phone
 
 
 class RouteDayOut(BaseModel):
@@ -130,6 +131,12 @@ class OrderOut(BaseModel):
     total_amount: Optional[float] = None
     created_at: Optional[datetime] = None
 
+    @field_validator("phone", mode="before")
+    @classmethod
+    def _dec_order_phone(cls, v):
+        """DB 中手机号按 enc: 前缀加密存储，读取时解密还原。"""
+        return decrypt_phone(v)
+
 
 class ConsultCreate(BaseModel):
     channel: str = "message"
@@ -166,6 +173,12 @@ class CustomerOut(BaseModel):
     total_orders: int
     total_amount: float
     last_contact_at: Optional[datetime] = None
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def _dec_customer_phone(cls, v):
+        """DB 中手机号按 enc: 前缀加密存储，读取时解密还原。"""
+        return decrypt_phone(v)
 
 
 class CustomerCreate(BaseModel):

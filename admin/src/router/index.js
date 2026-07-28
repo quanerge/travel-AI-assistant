@@ -14,7 +14,9 @@ const routes = [
       { path: 'customers', name: 'Customers', component: () => import('../views/Customers.vue'), meta: { title: '客户 CRM' } },
       { path: 'revenue', name: 'Revenue', component: () => import('../views/Revenue.vue'), meta: { title: '收益管理' } },
       { path: 'banners', name: 'Banners', component: () => import('../views/Banners.vue'), meta: { title: 'Banner 管理' } },
-      { path: 'consults', name: 'Consults', component: () => import('../views/Consults.vue'), meta: { title: '智能需求单' } }
+      { path: 'consults', name: 'Consults', component: () => import('../views/Consults.vue'), meta: { title: '智能需求单' } },
+      { path: 'users', name: 'Users', component: () => import('../views/Users.vue'), meta: { title: '用户管理' } },
+      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: '系统设置' } }
     ]
   }
 ]

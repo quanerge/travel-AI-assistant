@@ -7,6 +7,7 @@ from models import Order, Route, Payment
 from schemas import OrderCreate, OrderOut
 from routers.customers import upsert_customer_from_contact
 from routers.auth import get_current_admin
+from utils.crypto import encrypt_phone
 from models import AdminUser
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -25,7 +26,7 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
         user_id=payload.user_id,
         route_id=payload.route_id,
         name=payload.name,
-        phone=payload.phone,
+        phone=encrypt_phone(payload.phone),
         person_count=payload.person_count,
         departure_date=payload.departure_date,
         remark=payload.remark,

@@ -56,6 +56,14 @@ def seed():
             role="super", phone="4000000000"))
         print("已创建管理员 admin / admin123（bcrypt）")
 
+    # 演示用顾问账号（便于体验「用户管理」页角色/权限差异）
+    if not db.query(AdminUser).filter(AdminUser.username == "advisor").first():
+        db.add(AdminUser(
+            username="advisor",
+            password_hash=bcrypt.hashpw("advisor123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
+            role="advisor", phone="4000000001"))
+        print("已创建顾问账号 advisor / advisor123（bcrypt）")
+
     if db.query(Banner).count() == 0:
         db.add_all([
             Banner(image="https://picsum.photos/seed/yunnan/600/300", title="云南8日深度游", route_id=1, sort=1),

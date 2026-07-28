@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database import engine, Base, migrate
 import models  # noqa: ensure models registered
-from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth
+from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users
 
 # 创建表（演示用；生产请用 Alembic 迁移）
 Base.metadata.create_all(bind=engine)
@@ -35,6 +35,7 @@ app.include_router(upload.router)
 app.include_router(banners.router)
 app.include_router(favorites.router)
 app.include_router(auth.router)
+app.include_router(users.router)
 
 # 本地上传的静态资源（封面图等）：/static/covers/xxx.jpg
 os.makedirs(upload.STATIC_DIR, exist_ok=True)

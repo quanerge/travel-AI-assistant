@@ -36,6 +36,7 @@ def migrate():
         ("customer", "birthday", "VARCHAR(32)"),
         ("consult_record", "name", "VARCHAR(64)"),
         ("consult_record", "phone", "VARCHAR(32)"),
+        ("admin_user", "status", "VARCHAR(16)"),
     ]
     conn = engine.raw_connection()
     try:
