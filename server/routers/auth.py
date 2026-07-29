@@ -1,7 +1,10 @@
 # server/routers/auth.py
 # JWT 鉴权 + 微信小程序登录。
 import os
+import json
+import hashlib
 import datetime
+import urllib.request
 import bcrypt
 import jwt
 
@@ -108,28 +111,89 @@ def get_current_user(cred: HTTPAuthorizationCredentials = Depends(_bearer),
     return user
 
 
+def get_principal(cred: HTTPAuthorizationCredentials = Depends(_bearer),
+                  db: Session = Depends(get_db)):
+    """统一身份依赖：同时承载管理员与小程序用户，返回 (role, principal)。
+
+    role 为 "admin" 时 principal 是 AdminUser；为 "user" 时 principal 是 User。
+    供「管理后台与小程序共用同一接口」的场景（如订单、客户资料）做角色分流：
+    管理员可见全部，普通用户只能操作自己的资源。任何非法/过期/类型不符的
+    token 一律 401，杜绝越权访问。
+    """
+    if not cred or not cred.credentials:
+        raise HTTPException(status_code=401, detail="未登录或 token 缺失")
+    try:
+        data = jwt.decode(cred.credentials, SECRET, algorithms=[ALG])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="token 无效或已过期")
+    if data.get("type") == "admin":
+        admin = db.query(AdminUser).filter(AdminUser.id == int(data["sub"])).first()
+        if not admin:
+            raise HTTPException(status_code=401, detail="管理员不存在")
+        return ("admin", admin)
+    if data.get("type") == "user":
+        user = db.query(User).filter(User.id == int(data["sub"])).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="用户不存在")
+        return ("user", user)
+    raise HTTPException(status_code=401, detail="token 类型不正确")
+
+
+def _wechat_openid(appid: str, secret: str, code: str) -> str | None:
+    """调微信 jscode2session 换取稳定 openid（生产环境）。失败返回 None。
+
+    使用标准库 urllib，不引入额外依赖。
+    """
+    url = ("https://api.weixin.qq.com/sns/jscode2session"
+           f"?appid={appid}&secret={secret}&js_code={code}&grant_type=authorization_code")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "travel-ai/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return data.get("openid")
+    except Exception:
+        return None
+
+
+def _resolve_openid(payload: "WxLoginIn", db: Session) -> str:
+    """解析登录身份 openid，按优先级杜绝「客户端任意传 openid 即可冒充任意用户」：
+
+    1) 生产：WECHAT_APPID/WECHAT_SECRET 齐备时，用 code 调微信换稳定 openid（权威、不可伪造）；
+    2) 演示复用：仅接受「服务端此前已落库」的 openid（拒绝客户端凭空捏造，防冒充他人）；
+    3) 演示首登：用 code 派生一个持久 openid 落库，供下次启动复用（MVP 占位）。
+    """
+    appid = os.getenv("WECHAT_APPID")
+    secret = os.getenv("WECHAT_SECRET")
+    if appid and secret and payload.code:
+        real = _wechat_openid(appid, secret, payload.code)
+        if real:
+            return real
+    if payload.openid:
+        # 仅当该 openid 真实存在于库中（由服务端签发过）才信任，否则视为伪造
+        if db.query(User).filter(User.openid == payload.openid).first():
+            return payload.openid
+    if payload.code:
+        return "dev_" + hashlib.sha256((SECRET + payload.code).encode()).hexdigest()[:16]
+    raise HTTPException(status_code=400, detail="缺少有效的 code 或 openid")
+
+
 # ---------- 路由 ----------
 class WxLoginIn(BaseModel):
     code: str = None
     nickname: str = None
-    openid: str = None  # 客户端复用的稳定 openid（首次由 code 派生后存本地），优先于 code
+    openid: str = None  # 客户端复用的稳定 openid（仅当服务端此前已签发才被信任）
 
 
 @router.post("/wx-login")
 def wx_login(payload: WxLoginIn, db: Session = Depends(get_db)):
     """小程序静默登录：用 wx.login 拿到的 code 换取 openid。
 
-    MVP 说明：真实环境应拿 code 调微信 jscode2session 换 openid+session_key；
-    这里以 code 直接作为 openid 兜底（演示可用），上线时替换为微信接口返回。
-
-    若客户端已持有上次登录派生的 openid（存本地复用），优先用 openid 定位用户，
-    保证跨启动身份稳定。找到用户后顺带查出其注册客户，返回 customer 信息，
-    供前端在退出后重新打开时自动恢复登录态，无需再次注册。
+    安全加固（P0）：openid 由服务端权威解析（见 _resolve_openid），
+    严禁客户端任意指定 openid 冒充他人。生产环境配置 WECHAT_APPID/WECHAT_SECRET
+    后走微信官方 jscode2session；演示环境用 code 派生持久 openid 并落库复用，
+    保证跨启动身份稳定，且外部无法凭空捏造有效 openid。
     """
-    openid = payload.openid or payload.code
-    if not openid:
-        raise HTTPException(status_code=400, detail="缺少 code 或 openid")
-    # TODO(上线): openid = wechat_jscode2session(code)["openid"]
+    openid = _resolve_openid(payload, db)
     user = db.query(User).filter(User.openid == openid).first()
     if not user:
         user = User(openid=openid, nickname=payload.nickname or "微信用户", status="active")

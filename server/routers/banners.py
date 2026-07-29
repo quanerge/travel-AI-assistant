@@ -1,11 +1,12 @@
 # server/routers/banners.py —— 首页 Banner 轮播配置（需求 7.1）
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Banner, AdminUser
 from schemas import BannerOut, BannerCreate, BannerUpdate
 from routers.auth import get_current_admin
+from utils.pagination import paginate, set_pagination_headers
 
 router = APIRouter(prefix="/api/banners", tags=["banners"])
 
@@ -18,8 +19,11 @@ def list_banners(db: Session = Depends(get_db)):
 
 # ---------- 后台管理（需鉴权） ----------
 @router.get("/admin", response_model=list[BannerOut])
-def list_banners_admin(admin: AdminUser = Depends(get_current_admin), db: Session = Depends(get_db)):
-    return db.query(Banner).order_by(Banner.sort).all()
+def list_banners_admin(admin: AdminUser = Depends(get_current_admin), db: Session = Depends(get_db),
+                      page: int = None, page_size: int = 50, response: Response = None):
+    total, items = paginate(db.query(Banner).order_by(Banner.sort), page, page_size)
+    set_pagination_headers(response, page, page_size, total)
+    return items
 
 
 @router.post("/admin", response_model=BannerOut, status_code=201)

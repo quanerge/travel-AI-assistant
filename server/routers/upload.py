@@ -3,7 +3,8 @@
 import os
 import uuid
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from routers.auth import get_current_admin
 
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
@@ -16,7 +17,8 @@ MAX_SIZE = 5 * 1024 * 1024  # 5MB
 
 
 @router.post("/cover")
-async def upload_cover(file: UploadFile = File(...)):
+async def upload_cover(file: UploadFile = File(...),
+                      _admin=Depends(get_current_admin)):
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXT:
         raise HTTPException(400, "仅支持 jpg / png / webp / gif 图片")

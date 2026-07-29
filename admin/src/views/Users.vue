@@ -39,6 +39,16 @@
       </el-table-column>
     </el-table>
 
+    <div class="pager">
+      <el-pagination
+        layout="total, prev, pager, next"
+        :total="total"
+        :page-size="pageSize"
+        :current-page="page"
+        @current-change="onPage"
+      />
+    </div>
+
     <!-- 新增账号 -->
     <el-dialog v-model="createVisible" title="新增账号" width="480px" @closed="resetForm">
       <el-form :model="form" label-width="90px">
@@ -108,6 +118,9 @@ import { api } from '../api'
 
 const loading = ref(false)
 const rows = ref([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 const saving = ref(false)
 const currentId = JSON.parse(localStorage.getItem('admin') || '{}').id
 
@@ -131,12 +144,19 @@ function fmt(t) {
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await api.listUsers()
+    const res = await api.listUsers({ page: page.value, pageSize: pageSize.value })
+    rows.value = res.rows
+    total.value = res.total
   } catch (e) {
     ElMessage.error('加载失败：' + (e.response?.data?.detail || e.message))
   } finally {
     loading.value = false
   }
+}
+
+function onPage(p) {
+  page.value = p
+  load()
 }
 
 const openCreate = () => { resetForm(); createVisible.value = true }
@@ -210,3 +230,11 @@ const remove = async (row) => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+</style>

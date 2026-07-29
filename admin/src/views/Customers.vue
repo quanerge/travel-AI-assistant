@@ -6,15 +6,15 @@
         placeholder="按标签筛选"
         clearable
         style="width: 180px"
-        @keyup.enter="load"
-        @clear="load"
+        @keyup.enter="search"
+        @clear="search"
       />
       <el-select
         v-model="statusFilter"
         placeholder="跟进状态"
         clearable
         style="width: 160px"
-        @change="load"
+        @change="search"
       >
         <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
       </el-select>
@@ -25,7 +25,14 @@
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="客户" width="110" />
       <el-table-column prop="wechat_no" label="微信号" width="130" />
-      <el-table-column prop="phone" label="手机" width="130" />
+      <el-table-column label="手机" width="160">
+        <template #default="{ row }">
+          <span>{{ revealed[row.id] ? row.phone : maskPhone(row.phone) }}</span>
+          <el-button link type="primary" size="small" @click="toggleReveal(row.id)">
+            {{ revealed[row.id] ? '隐藏' : '显示' }}
+          </el-button>
+        </template>
+      </el-table-column>
       <el-table-column prop="birthday" label="生日" width="90" />
       <el-table-column prop="source" label="来源" width="100" />
       <el-table-column prop="tags" label="标签" width="120" />
@@ -49,6 +56,16 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pager">
+      <el-pagination
+        layout="total, prev, pager, next"
+        :total="total"
+        :page-size="pageSize"
+        :current-page="page"
+        @current-change="onPage"
+      />
+    </div>
 
     <!-- 新增 / 编辑客户 -->
     <el-dialog
@@ -130,13 +147,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../api'
+import { maskPhone } from '../utils/mask'
 
 const loading = ref(false)
 const rows = ref([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 const tagFilter = ref('')
+// 手机号脱敏：默认掩码，点击「显示」才暴露完整号码（授权管理员可见）
+const revealed = reactive({})
+function toggleReveal(id) {
+  revealed[id] = !revealed[id]
+}
 const statusFilter = ref('')
 
 const statusOptions = [
@@ -176,13 +202,26 @@ function fmt(t) {
 async function load() {
   loading.value = true
   try {
-    const params = {}
+    const params = { page: page.value, pageSize: pageSize.value }
     if (tagFilter.value) params.tag = tagFilter.value
     if (statusFilter.value) params.follow_status = statusFilter.value
-    rows.value = await api.listCustomers(params)
+    const res = await api.listCustomers(params)
+    rows.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }
+}
+
+// 切换筛选条件时回到第一页
+function search() {
+  page.value = 1
+  load()
+}
+
+function onPage(p) {
+  page.value = p
+  load()
 }
 
 function openCreate() {
@@ -235,5 +274,10 @@ onMounted(load)
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
+}
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

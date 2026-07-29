@@ -4,5 +4,7 @@ sqlalchemy==2.0.35
 pydantic==2.9.2
 pymysql==1.1.1
 python-dotenv==1.0.1
-python-multipart==0.0.32  # UploadFile / 表单上传（封面图等）所需
-gunicorn==23.0.0  # 生产部署（Docker/裸机）用，本地 uvicorn 验证不受影响
+python-multipart==0.0.32  # UploadFile / form upload (cover image, etc.)
+gunicorn==23.0.0  # production deploy (Docker/bare metal); local uvicorn is fine
+bcrypt==4.1.3  # password hashing (admin login / user password)
+PyJWT==2.9.0  # JWT issue/verify for admin and mini-program user tokens

@@ -98,10 +98,10 @@ const load = async () => {
   loading.value = true
   try {
     const [bs, rs] = await Promise.all([api.listBannersAdmin(), api.listRoutes()])
-    rows.value = bs
-    routes.value = rs
+    rows.value = bs.rows
+    routes.value = rs.rows
     routeMap.value = {}
-    rs.forEach(r => { routeMap.value[r.id] = r.name })
+    rs.rows.forEach(r => { routeMap.value[r.id] = r.name })
   } catch (e) {
     ElMessage.error('加载失败：' + (e.response?.data?.detail || e.message))
   } finally {

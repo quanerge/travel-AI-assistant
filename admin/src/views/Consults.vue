@@ -15,6 +15,16 @@
       </el-table-column>
       <el-table-column prop="created_at" label="提交时间" min-width="180" />
     </el-table>
+
+    <div class="pager">
+      <el-pagination
+        layout="total, prev, pager, next"
+        :total="total"
+        :page-size="pageSize"
+        :current-page="page"
+        @current-change="onPage"
+      />
+    </div>
   </el-card>
 </template>
 
@@ -24,15 +34,33 @@ import { api } from '../api'
 
 const loading = ref(false)
 const rows = ref([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 
 onMounted(load)
 
 async function load() {
   loading.value = true
   try {
-    rows.value = await api.listConsults()
+    const res = await api.listConsults({ page: page.value, pageSize: pageSize.value })
+    rows.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }
 }
+
+function onPage(p) {
+  page.value = p
+  load()
+}
 </script>
+
+<style scoped>
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+</style>

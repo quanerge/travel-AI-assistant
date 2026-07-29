@@ -1,24 +1,21 @@
 # server/routers/routes.py
 import json
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Route, RouteDay
+from models import Route, RouteDay, AdminUser
 from schemas import RouteOut, RouteCreate, RouteUpdate, RouteDayCreate
+from routers.auth import get_current_admin
+from utils.pagination import paginate, set_pagination_headers
 
 router = APIRouter(prefix="/api/routes", tags=["routes"])
-
-
-def _admin_id(request: Request) -> int | None:
-    """从 X-Admin-Id 头读取后台操作人（演示用，后端未强制校验 token）。"""
-    v = request.headers.get("X-Admin-Id")
-    return int(v) if v and v.isdigit() else None
 
 
 @router.get("", response_model=list[RouteOut])
 def list_routes(category: str = None, keyword: str = None,
                 min_days: int = None, max_days: int = None,
                 departure: str = None, price_min: float = None, price_max: float = None,
+                page: int = None, page_size: int = 50, response: Response = None,
                 db: Session = Depends(get_db)):
     q = db.query(Route)
     if category and category != "全部":
@@ -35,7 +32,9 @@ def list_routes(category: str = None, keyword: str = None,
         q = q.filter(Route.price >= price_min)
     if price_max is not None:
         q = q.filter(Route.price <= price_max)
-    return q.all()
+    total, items = paginate(q, page, page_size)
+    set_pagination_headers(response, page, page_size, total)
+    return items
 
 
 @router.get("/{route_id}", response_model=RouteOut)
@@ -47,11 +46,12 @@ def get_route(route_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=RouteOut, status_code=201)
-def create_route(payload: RouteCreate, request: Request, db: Session = Depends(get_db)):
+def create_route(payload: RouteCreate, admin: AdminUser = Depends(get_current_admin),
+                db: Session = Depends(get_db)):
     data = payload.model_dump(exclude={"route_days"})
     if data.get("gallery") is not None:
         data["gallery"] = json.dumps(data["gallery"], ensure_ascii=False)
-    route = Route(**data, created_by=_admin_id(request))
+    route = Route(**data, created_by=admin.id)
     if payload.route_days:
         route.route_days = [_day_model(d) for d in payload.route_days]
     db.add(route)
@@ -61,7 +61,8 @@ def create_route(payload: RouteCreate, request: Request, db: Session = Depends(g
 
 
 @router.put("/{route_id}", response_model=RouteOut)
-def update_route(route_id: int, payload: RouteUpdate, db: Session = Depends(get_db)):
+def update_route(route_id: int, payload: RouteUpdate,
+                _admin=Depends(get_current_admin), db: Session = Depends(get_db)):
     route = db.query(Route).filter(Route.id == route_id).first()
     if not route:
         raise HTTPException(404, "线路不存在")
@@ -79,7 +80,8 @@ def update_route(route_id: int, payload: RouteUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{route_id}")
-def delete_route(route_id: int, db: Session = Depends(get_db)):
+def delete_route(route_id: int, _admin=Depends(get_current_admin),
+                db: Session = Depends(get_db)):
     route = db.query(Route).filter(Route.id == route_id).first()
     if not route:
         raise HTTPException(404, "线路不存在")

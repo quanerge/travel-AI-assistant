@@ -8,7 +8,12 @@
             <el-tag :type="statusType(o.status)">{{ statusText(o.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="客户">{{ o.name }}</el-descriptions-item>
-          <el-descriptions-item label="手机">{{ o.phone }}</el-descriptions-item>
+          <el-descriptions-item label="手机">
+            <span>{{ showPhone ? o.phone : maskPhone(o.phone) }}</span>
+            <el-button link type="primary" size="small" @click="showPhone = !showPhone">
+              {{ showPhone ? '隐藏' : '显示' }}
+            </el-button>
+          </el-descriptions-item>
           <el-descriptions-item label="人数">{{ o.person_count }}</el-descriptions-item>
           <el-descriptions-item label="出发日">{{ o.departure_date || '—' }}</el-descriptions-item>
           <el-descriptions-item label="总额(元)">{{ o.total_amount != null ? o.total_amount : '—' }}</el-descriptions-item>
@@ -41,6 +46,7 @@
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../api'
+import { maskPhone } from '../utils/mask'
 
 const props = defineProps({ modelValue: Boolean, orderId: Number })
 const emit = defineEmits(['update:modelValue', 'updated'])
@@ -48,6 +54,7 @@ const emit = defineEmits(['update:modelValue', 'updated'])
 const loading = ref(false)
 const acting = ref(false)
 const o = ref(null)
+const showPhone = ref(false)
 
 const statusMap = {
   pending_confirm: ['warning', '待确认'],
@@ -65,6 +72,7 @@ watch(() => props.modelValue, (v) => { if (v && props.orderId) load() })
 
 const load = async () => {
   loading.value = true
+  showPhone.value = false
   try {
     o.value = await api.getOrder(props.orderId)
   } catch (e) {

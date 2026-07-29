@@ -2,10 +2,10 @@
   <el-card class="page-card">
     <div style="display:flex;gap:12px;margin-bottom:12px;align-items:center">
       <el-input v-model="kw" placeholder="线路名/目的地" clearable style="width:220px" @keyup.enter="load" />
-      <el-select v-model="cat" placeholder="分类" clearable style="width:140px" @change="load">
+      <el-select v-model="cat" placeholder="分类" clearable style="width:140px" @change="search">
         <el-option v-for="c in cats" :key="c" :label="c" :value="c" />
       </el-select>
-      <el-button type="primary" @click="load">查询</el-button>
+      <el-button type="primary" @click="search">查询</el-button>
       <el-button type="success" @click="openCreate" style="margin-left:auto">+ 新增线路</el-button>
     </div>
 
@@ -36,6 +36,16 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pager">
+      <el-pagination
+        layout="total, prev, pager, next"
+        :total="total"
+        :page-size="pageSize"
+        :current-page="page"
+        @current-change="onPage"
+      />
+    </div>
 
     <!-- 行程查看弹窗 -->
     <el-dialog v-model="detailVisible" title="行程安排" width="640px">
@@ -148,6 +158,9 @@ import { api } from '../api'
 
 const loading = ref(false)
 const rows = ref([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 const kw = ref('')
 const cat = ref('')
 const cats = ['国内游', '短途游', '出境游', '周边游', '主题游']
@@ -203,8 +216,26 @@ function resetForm() { Object.assign(form, emptyForm()) }
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await api.listRoutes({ keyword: kw.value || undefined, category: cat.value || undefined })
+    const res = await api.listRoutes({
+      keyword: kw.value || undefined,
+      category: cat.value || undefined,
+      page: page.value,
+      pageSize: pageSize.value,
+    })
+    rows.value = res.rows
+    total.value = res.total
   } finally { loading.value = false }
+}
+
+// 关键字/分类变化时回到第一页
+function search() {
+  page.value = 1
+  load()
+}
+
+function onPage(p) {
+  page.value = p
+  load()
 }
 
 const openDetail = async (row) => {
@@ -299,3 +330,11 @@ const remove = async (row) => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+</style>

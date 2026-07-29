@@ -32,9 +32,13 @@ npm run dev -- --port 5173     # 开发预览，访问 http://127.0.0.1:5173
 # 或生产构建：npm run build → 产物在 admin/dist/，用任意静态服务器托管
 ```
 
-- `vite.config.js` 已配 `/api` 代理到 `http://127.0.0.1:8000`，所以浏览器直接开 5173 即可连真实后端。
-- **生产托管**：`npm run build` 产物在 `admin/dist/`，用 nginx 托管该目录并把 `/api` 反向代理到后端（见 `server/nginx.conf`）即可。
+- `vite.config.js` 已配 `/api` 代理到 `http://127.0.0.1:8000`，所以浏览器直接开 5173 即可连真实后端；`base` 已设为相对路径 `./`，部署到任意子目录 / CloudStudio 都不会 404。
+- **生产托管**：`npm run build` 产物在 `admin/dist/`，用 nginx 托管该目录并把 `/api` 反向代理到后端（见 `server/nginx.conf`）即可。最新构建已含 **用户管理**（`/users`）、**系统设置**（`/settings`）两个新后台页面，以及客户/订单手机号的 **默认脱敏（138****8888，点「显示」才出全号）**。
+- **一键脚本**：仓库根 `deploy.bat`（Windows 双击：自动 `npm install` + `npm run build` + **先杀掉占用 8000 端口的旧后端进程**（修复「界面显示 `enc:` 密文」问题）+ 启动后端 + 跑手机号迁移，最后自动打开 `http://127.0.0.1:8000/ui/`）。
+- **轻量重启**：若仅后端改了代码、前端无需重建，直接双击 `restart-backend.bat`（同样先杀旧进程再重启，约 5 秒即可解决 `enc:` 乱码，无需等待 `npm build`）。
 - 登录账号：`admin / admin123`（密码已用 **bcrypt** 哈希，登录后签发 **JWT**，后台接口均校验 `Authorization: Bearer <token>`；正式环境请务必改密码）。
+- **一步到位打开后台**：后端启动后若 `admin/dist` 已构建，访问 `http://127.0.0.1:8000/ui/`（根路径 `/` 会自动跳转）即可，无需另起静态服务器——后端已直接托管前端，`/api` 同源无跨域。
+- 演示顾问账号（用户管理页可管理）：`advisor / advisor123`（角色 advisor，仅能看到被分配的功能；用户管理页自身仅超管可见）。
 
 ### C. 微信小程序（用户端）
 
@@ -68,7 +72,7 @@ npm run dev -- --port 5173     # 开发预览，访问 http://127.0.0.1:5173
 
 1. **请求域名必须是 HTTPS**，且域名已完成 **ICP 备案**。`http://`、未备案域名、IP 直连均会被拦截。
 2. 域名须在 **微信公众平台 → 开发管理 → 开发设置 → 服务器域名** 中登记为「request 合法域名」。
-3. 当前 `project.config.json` 的 `appid` 是占位值 `tourist-demo-appid`，发布前必须换成你自己的小程序 AppID（或用测试号体验）。
+3. 当前 `project.config.json` 的 `appid` 为 `wxefd32155fa7d0442`（你自己的 AppID，可直接真机预览/上传）。发布前请确认该 AppID 已完成小程序认证与类目资质；若用测试号体验，导入时切「测试号」即可。
 
 > 因此「部署」= 把后端放到一个**已备案 HTTPS 域名**下 + 把小程序上传审核发布。
 
@@ -157,7 +161,9 @@ python seed.py
 
 - [ ] `CORS_ORIGINS` 已设为真实域名，**删除 `"*"`**。
 - [x] 管理员密码已用 **bcrypt** 哈希，登录签发 **JWT**，受保护接口均校验 `Authorization: Bearer <token>`（已实现）。**请务必更换默认密码 `admin/admin123`**。
-- [ ] 手机号等敏感字段加密存储（需求第 5/10 章）。
+- [x] 手机号等敏感字段**加密存储**（V1.3 已实现）：`server/utils/crypto.py` 用标准库（hashlib/base64/os，无第三方依赖）做 `enc:` 前缀可逆加密；写入全加密、接口返回自动解密；`server/migrate_phones.py` 可一次性把历史明文加密（幂等，可重复执行）。**管理后台界面已默认脱敏，点「显示」才暴露全号。**
+- [x] 小程序用户端鉴权（V1.3 已实现）：`wx_login` 签发用户 JWT（30 天），收藏等接口改走 `get_current_user` 依赖，身份取自 token；管理员 token 加 `type:"admin"` 防越权。
+- [x] 后台用户管理（V1.3 已实现）：`/api/users` 超管专属账号 CRUD（增删、改密码、改角色、启用/停用），禁止操作自身防锁死；`/api/admin/settings` 返回环境/安全状态（**绝不回显密钥明文**）。
 - [ ] `seed.py` 中的演示数据在正式库清理或脱敏。
 - [ ] HTTPS 证书有效且自动续期；`/docs` 已限制访问（nginx 配置已加 IP 白名单示例）。
 - [ ] 微信小程序隐私政策页、用户协议已上线。
@@ -188,4 +194,7 @@ curl https://api.your-domain.com/
 | `server/.dockerignore` | 构建时忽略项 |
 | `server/.env.example` | 生产环境变量模板 |
 | `server/nginx.conf` | HTTPS 反向代理示例 |
+| `deploy.bat` | Windows 一键：杀旧进程 + 构建前端 + 启动后端 + 手机号迁移 |
+| `restart-backend.bat` | 轻量重启：仅杀旧进程 + 重启后端（不含前端构建，秒级修复 enc: 乱码） |
+| `需求说明书_修订版V1.1.md` / `页面设计文档_V1.1.md` | 已升级至 **V1.3**（新增加密、用户JWT、用户管理/系统设置、我的资料/生日编辑） |
 | `DEPLOY.md` | 本指南 |

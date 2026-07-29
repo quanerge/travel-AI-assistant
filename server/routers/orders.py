@@ -1,20 +1,24 @@
 # server/routers/orders.py
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Order, Route, Payment
 from schemas import OrderCreate, OrderOut
 from routers.customers import upsert_customer_from_contact
-from routers.auth import get_current_admin
+from routers.auth import get_current_admin, get_current_user, get_principal
 from utils.crypto import encrypt_phone
-from models import AdminUser
+from utils.pagination import paginate, set_pagination_headers
+from models import AdminUser, User
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
 
 @router.post("", response_model=OrderOut)
-def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
+def create_order(payload: OrderCreate, current_user: User = Depends(get_current_user),
+                db: Session = Depends(get_db)):
+    """小程序用户下单：身份以 JWT 为准，强制 user_id = 当前用户，杜绝伪造他人订单。"""
+    payload.user_id = current_user.id
     order_no = "NO" + str(int(time.time() * 1000))
     total = None
     if payload.route_id:
@@ -45,24 +49,36 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=list[OrderOut])
-def list_orders(user_id: int = None, db: Session = Depends(get_db)):
+def list_orders(principal=Depends(get_principal), user_id: int = None,
+                page: int = None, page_size: int = 50, response: Response = None,
+                db: Session = Depends(get_db)):
+    """订单列表：管理员可见全部（可按 user_id 筛选）；小程序用户仅可见自己的订单。"""
+    role, obj = principal
     q = db.query(Order)
-    if user_id:
+    if role == "user":
+        q = q.filter(Order.user_id == obj.id)
+    elif user_id:
         q = q.filter(Order.user_id == user_id)
-    return q.order_by(Order.id.desc()).all()
+    total, items = paginate(q.order_by(Order.id.desc()), page, page_size)
+    set_pagination_headers(response, page, page_size, total)
+    return items
 
 
 @router.get("/{order_id}", response_model=OrderOut)
-def get_order(order_id: int, db: Session = Depends(get_db)):
+def get_order(order_id: int, principal=Depends(get_principal), db: Session = Depends(get_db)):
+    role, obj = principal
     o = db.query(Order).filter(Order.id == order_id).first()
     if not o:
         raise HTTPException(404, "订单不存在")
+    if role == "user" and o.user_id != obj.id:
+        raise HTTPException(403, "无权查看该订单")
     return o
 
 
 @router.post("/{order_id}/confirm-deposit")
-def confirm_deposit(order_id: int, operator_id: int = None, db: Session = Depends(get_db)):
-    """MVP 线下定金确认：顾问确认收款后订单推进。"""
+def confirm_deposit(order_id: int, admin: AdminUser = Depends(get_current_admin),
+                   db: Session = Depends(get_db)):
+    """MVP 线下定金确认：顾问确认收款后订单推进。操作人强制取当前管理员。"""
     o = db.query(Order).filter(Order.id == order_id).first()
     if not o:
         raise HTTPException(404, "订单不存在")
@@ -70,7 +86,7 @@ def confirm_deposit(order_id: int, operator_id: int = None, db: Session = Depend
     o.deposit_paid = True
     o.updated_at = None  # trigger onupdate
     db.add(Payment(order_id=o.id, type="deposit", amount=o.deposit_amount or 0,
-                   method="offline", status="paid", operator_id=operator_id))
+                   method="offline", status="paid", operator_id=admin.id))
     db.commit()
     return {"status": o.status, "msg": "定金已确认"}
 

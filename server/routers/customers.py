@@ -1,6 +1,6 @@
 # server/routers/customers.py
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Customer, FollowUp, User
@@ -9,8 +9,26 @@ from schemas import (
     FollowUpOut, FollowUpCreate, CustomerRegister, RegisterOut
 )
 from utils.crypto import encrypt_phone, decrypt_phone
+from utils.pagination import paginate, set_pagination_headers
+from routers.auth import get_current_admin, get_principal
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
+
+
+def _auth_customer_writer(customer_id: int,
+                          principal=Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """客户资料写入鉴权：管理员可改任意客户；小程序用户仅能改自己名下的客户资料。
+
+    防止普通用户篡改他人 CRM 资料（越权写）。
+    """
+    role, obj = principal
+    if role == "admin":
+        return
+    cust = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not cust or cust.user_id != obj.id:
+        raise HTTPException(status_code=403, detail="无权操作该客户资料")
+    return
 
 
 def _validate_md(birthday: str) -> str | None:
@@ -86,17 +104,23 @@ def upsert_customer_from_contact(db: Session, name: str = None, phone: str = Non
 
 
 @router.get("", response_model=list[CustomerOut])
-def list_customers(tag: str = None, follow_status: str = None, db: Session = Depends(get_db)):
+def list_customers(tag: str = None, follow_status: str = None,
+                   page: int = None, page_size: int = 50,
+                   response: Response = None,
+                   _admin=Depends(get_current_admin), db: Session = Depends(get_db)):
     q = db.query(Customer)
     if tag:
         q = q.filter(Customer.tags.contains(tag))
     if follow_status:
         q = q.filter(Customer.follow_status == follow_status)
-    return q.order_by(Customer.id.desc()).all()
+    total, items = paginate(q.order_by(Customer.id.desc()), page, page_size)
+    set_pagination_headers(response, page, page_size, total)
+    return items
 
 
 @router.get("/birthdays")
-def birthday_reminders(days: int = 1, db: Session = Depends(get_db)):
+def birthday_reminders(days: int = 1, _admin=Depends(get_current_admin),
+                       db: Session = Depends(get_db)):
     """生日/纪念日提醒：返回生日为今天或未来 days 天内的客户。
 
     默认 days=1 -> 今天 + 明天。offset: 0=今天, 1=明天, 2=后天…
@@ -123,7 +147,8 @@ def birthday_reminders(days: int = 1, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=CustomerOut)
-def create_customer(payload: CustomerCreate, db: Session = Depends(get_db)):
+def create_customer(payload: CustomerCreate, _admin=Depends(get_current_admin),
+                   db: Session = Depends(get_db)):
     """后台手动录入客户。"""
     data = payload.model_dump()
     data["phone"] = encrypt_phone(data.get("phone"))
@@ -210,7 +235,8 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
 
 
 @router.put("/{customer_id}", response_model=CustomerOut)
-def update_customer(customer_id: int, payload: CustomerUpdate, db: Session = Depends(get_db)):
+def update_customer(customer_id: int, payload: CustomerUpdate,
+                    _auth=Depends(_auth_customer_writer), db: Session = Depends(get_db)):
     """编辑客户资料（标签 / 备注 / 跟进状态 / 画像等）。"""
     cust = db.query(Customer).filter(Customer.id == customer_id).first()
     if not cust:
@@ -225,7 +251,8 @@ def update_customer(customer_id: int, payload: CustomerUpdate, db: Session = Dep
 
 
 @router.get("/{customer_id}/follow-ups", response_model=list[FollowUpOut])
-def list_follow_ups(customer_id: int, db: Session = Depends(get_db)):
+def list_follow_ups(customer_id: int, _admin=Depends(get_current_admin),
+                   db: Session = Depends(get_db)):
     cust = db.query(Customer).filter(Customer.id == customer_id).first()
     if not cust:
         raise HTTPException(404, "客户不存在")
@@ -233,7 +260,8 @@ def list_follow_ups(customer_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{customer_id}/follow-ups", response_model=FollowUpOut)
-def add_follow_up(customer_id: int, payload: FollowUpCreate, db: Session = Depends(get_db)):
+def add_follow_up(customer_id: int, payload: FollowUpCreate,
+                 _admin=Depends(get_current_admin), db: Session = Depends(get_db)):
     """添加一条跟进记录，并刷新客户最后联系时间。"""
     cust = db.query(Customer).filter(Customer.id == customer_id).first()
     if not cust:

@@ -68,7 +68,9 @@ const money = (v) => (v == null ? '0.00' : Number(v).toLocaleString('zh-CN', { m
 onMounted(async () => {
   loading.value = true
   try {
-    const [orders, routes] = await Promise.all([api.listOrders(), api.listRoutes()])
+    const [ordersRes, routesRes] = await Promise.all([api.listOrders(), api.listRoutes()])
+    const orders = ordersRes.rows
+    const routes = routesRes.rows
     const routeMap = {}
     routes.forEach(r => { routeMap[r.id] = r })
     let totalIncome = 0, totalProfit = 0, depositIncome = 0, paidCount = 0

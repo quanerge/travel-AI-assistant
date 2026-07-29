@@ -2,13 +2,15 @@
 import bcrypt
 import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import AdminUser
 from routers.auth import get_current_admin
+from utils.crypto import encrypt_phone, decrypt_phone
+from utils.pagination import paginate, set_pagination_headers
 
 router = APIRouter(prefix="/api/admin/users", tags=["admin-users"])
 
@@ -43,15 +45,17 @@ class StatusUpdate(BaseModel):
 
 
 @router.get("")
-def list_users(admin: AdminUser = Depends(require_super), db: Session = Depends(get_db)):
+def list_users(admin: AdminUser = Depends(require_super), db: Session = Depends(get_db),
+              page: int = None, page_size: int = 50, response: Response = None):
     """列出全部管理员账号（不含密码）。"""
-    rows = db.query(AdminUser).order_by(AdminUser.id).all()
+    total, rows = paginate(db.query(AdminUser).order_by(AdminUser.id), page, page_size)
+    set_pagination_headers(response, page, page_size, total)
     return [
         {
             "id": u.id,
             "username": u.username,
             "role": u.role,
-            "phone": u.phone,
+            "phone": decrypt_phone(u.phone),
             "status": getattr(u, "status", "active") or "active",
             "created_at": u.created_at,
         }
@@ -74,14 +78,14 @@ def create_user(payload: UserCreate, admin: AdminUser = Depends(require_super),
         password_hash=bcrypt.hashpw(payload.password.encode("utf-8"),
                                      bcrypt.gensalt()).decode("utf-8"),
         role=payload.role,
-        phone=payload.phone,
+        phone=encrypt_phone(payload.phone),
         status="active",
     )
     db.add(user)
     db.commit()
     db.refresh(user)
     return {"id": user.id, "username": user.username, "role": user.role,
-            "phone": user.phone, "status": "active"}
+            "phone": decrypt_phone(user.phone), "status": "active"}
 
 
 @router.put("/{user_id}/password")
