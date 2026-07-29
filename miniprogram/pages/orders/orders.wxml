@@ -12,5 +12,8 @@
       <text class="price-sm">¥{{item.total_amount || '--'}}</text>
       <text class="sub">{{item.order_no}}</text>
     </view>
+    <view class="card-foot" wx:if="{{item.canDelete}}">
+      <text class="link-danger" catchtap="deleteOrder" data-id="{{item.id}}">删除订单</text>
+    </view>
   </view>
 </view>

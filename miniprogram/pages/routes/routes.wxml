@@ -1,19 +1,44 @@
 <!-- pages/routes/routes.wxml -->
 <view class="page">
   <view class="search">
-    <input placeholder="搜索目的地 / 线路名" value="{{keyword}}" bindinput="onSearch" />
+    <text class="search-ico">🔍</text>
+    <input placeholder="搜索目的地 / 线路名" value="{{keyword}}" bindinput="onSearch" confirm-type="search" />
   </view>
 
-  <!-- 筛选器：天数 / 出发地 / 价格 -->
   <view class="filters">
-    <view class="filter-row">
-      <input class="filter-input" placeholder="最少天数" type="number" value="{{filters.minDays}}" bindinput="onFilter" data-f="minDays" />
-      <input class="filter-input" placeholder="最多天数" type="number" value="{{filters.maxDays}}" bindinput="onFilter" data-f="maxDays" />
+    <view class="filters-head">
+      <text class="filters-title">筛选</text>
+      <text class="reset" bindtap="resetFilters">重置</text>
     </view>
-    <view class="filter-row">
-      <input class="filter-input" placeholder="出发地" value="{{filters.departure}}" bindinput="onFilter" data-f="departure" />
-      <input class="filter-input" placeholder="最低价" type="digit" value="{{filters.priceMin}}" bindinput="onFilter" data-f="priceMin" />
-      <input class="filter-input" placeholder="最高价" type="digit" value="{{filters.priceMax}}" bindinput="onFilter" data-f="priceMax" />
+
+    <!-- 行程天数：区间单选 -->
+    <view class="fgroup">
+      <view class="flabel">行程天数</view>
+      <view class="opts">
+        <view wx:for="{{dayRanges}}" wx:key="v"
+              class="opt {{filters.dayRange === item.v ? 'opt-on' : ''}}"
+              data-v="{{item.v}}" bindtap="pickDay">{{item.label}}</view>
+      </view>
+    </view>
+
+    <!-- 价格区间：区间单选 -->
+    <view class="fgroup">
+      <view class="flabel">价格区间</view>
+      <view class="opts">
+        <view wx:for="{{priceRanges}}" wx:key="v"
+              class="opt {{filters.priceRange === item.v ? 'opt-on' : ''}}"
+              data-v="{{item.v}}" bindtap="pickPrice">{{item.label}}</view>
+      </view>
+    </view>
+
+    <!-- 出发地：从数据自动提取，单选 -->
+    <view class="fgroup">
+      <view class="flabel">出发地</view>
+      <view class="opts">
+        <view wx:for="{{departureOptions}}" wx:key="*this"
+              class="opt {{filters.departure === item ? 'opt-on' : ''}}"
+              data-v="{{item}}" bindtap="pickDeparture">{{item}}</view>
+      </view>
     </view>
   </view>
 

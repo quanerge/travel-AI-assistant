@@ -24,6 +24,10 @@ const api = {
   getOrderDetail(id) {
     return useMock ? mock.getOrderDetail(id) : request('/orders/' + id)
   },
+  // 客户删除自己的订单（软删除；管理员可在后台删任意单）
+  deleteOrder(id) {
+    return useMock ? mock.deleteOrder(id) : request('/orders/' + id + '/delete', 'POST', {})
+  },
   submitConsult(payload) {
     return useMock ? mock.submitConsult(payload) : request('/consult', 'POST', payload)
   },

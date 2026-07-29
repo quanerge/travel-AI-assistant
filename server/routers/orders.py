@@ -1,8 +1,10 @@
 # server/routers/orders.py
 import time
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, migrate
 from models import Order, Route, Payment
 from schemas import OrderCreate, OrderOut
 from routers.customers import upsert_customer_from_contact
@@ -69,6 +71,7 @@ def list_orders(principal=Depends(get_principal), user_id: int = None,
         q = q.filter(Order.user_id == obj.id)
     elif user_id:
         q = q.filter(Order.user_id == user_id)
+    q = q.filter(or_(Order.is_deleted == False, Order.is_deleted.is_(None)))
     total, items = paginate(q.order_by(Order.id.desc()), page, page_size)
     set_pagination_headers(response, page, page_size, total)
     _attach_route_name(db, items)
@@ -78,7 +81,10 @@ def list_orders(principal=Depends(get_principal), user_id: int = None,
 @router.get("/{order_id}", response_model=OrderOut)
 def get_order(order_id: int, principal=Depends(get_principal), db: Session = Depends(get_db)):
     role, obj = principal
-    o = db.query(Order).filter(Order.id == order_id).first()
+    o = db.query(Order).filter(
+        Order.id == order_id,
+        or_(Order.is_deleted == False, Order.is_deleted.is_(None))
+    ).first()
     if not o:
         raise HTTPException(404, "订单不存在")
     if role == "user" and o.user_id != obj.id:
@@ -119,7 +125,7 @@ def confirm_order(order_id: int, admin: AdminUser = Depends(get_current_admin),
 
 @router.post("/{order_id}/complete")
 def complete_order(order_id: int, admin: AdminUser = Depends(get_current_admin),
-                   db: Session = Depends(get_db)):
+                  db: Session = Depends(get_db)):
     """订单完成：流转到 completed（报名成功/已成团完成）。"""
     o = db.query(Order).filter(Order.id == order_id).first()
     if not o:
@@ -127,3 +133,37 @@ def complete_order(order_id: int, admin: AdminUser = Depends(get_current_admin),
     o.status = "completed"
     db.commit()
     return {"status": o.status, "msg": "订单已完成"}
+
+
+@router.post("/{order_id}/delete", response_model=OrderOut)
+def delete_order(order_id: int, db: Session = Depends(get_db),
+                 principal: tuple = Depends(get_principal)):
+    """软删除订单（管理员与下单客户本人均可）。
+
+    权限：
+    - 管理员：可删除任意订单（清理测试 / 异常单）。
+    - 客户：只能删除「自己」且「尚未产生资金往来」的订单（status 为待确认/待付定金，
+      且未付定金）；已确认、已收定金或已完成的订单不允许自助删除，
+      避免财务/履约记录悬空，需联系顾问处理。
+    软删除仅置 is_deleted 标记，保留审计与支付记录，误删可恢复。
+    """
+    role, actor = principal
+    o = db.query(Order).filter(Order.id == order_id).first()
+    if not o:
+        raise HTTPException(404, "订单不存在")
+    if role == "user":
+        if o.user_id != actor.id:
+            raise HTTPException(403, "只能删除自己的订单")
+        if o.deposit_paid or o.status in ("confirmed", "deposit_received", "success", "completed"):
+            raise HTTPException(400, "该订单已确认/已付定金，无法直接删除，如需处理请联系顾问")
+    o.is_deleted = True
+    o.deleted_at = datetime.utcnow()
+    try:
+        db.commit()
+    except Exception:
+        # 兜底：运行中的库可能尚未 migrate() 补齐软删除列，自动补列后重试一次
+        migrate()
+        db.commit()
+    db.refresh(o)
+    _attach_route_name(db, [o])
+    return o

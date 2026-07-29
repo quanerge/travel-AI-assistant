@@ -60,6 +60,7 @@ export const api = {
 
   listOrders: (params) => listRes('/orders', params),
   getOrder: (id) => http.get(`/orders/${id}`),
+  deleteOrder: (id) => http.post(`/orders/${id}/delete`),
   confirmOrder: (id) => http.post(`/orders/${id}/confirm`),
   confirmDeposit: (id) => http.post(`/orders/${id}/confirm-deposit`),
   completeOrder: (id) => http.post(`/orders/${id}/complete`),
@@ -80,6 +81,15 @@ export const api = {
   updateConsult: (id, data) => http.put(`/consult/${id}`, data),
   deleteConsult: (id) => http.post(`/consult/${id}/delete`),
   getMe: () => http.get('/auth/me'),
+
+  // 后端应用版本（公开接口，无需登录；用于管理后台左侧版本号展示）
+  getVersion: () => http.get('/version'),
+
+  // 客服消息回传（微信客服 → 管理后台）
+  chatSessions: () => http.get('/admin/chat/sessions'),
+  chatMessages: (openid) => http.get('/admin/chat/messages', { params: { openid } }),
+  chatReply: (openid, content) => http.post('/admin/chat/reply', { openid, content }),
+  chatRead: (openid) => http.post('/admin/chat/read', { openid }),
 
   // 系统设置
   getSettings: () => http.get('/admin/settings'),

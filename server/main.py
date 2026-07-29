@@ -14,7 +14,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from database import engine, Base, migrate
 import models  # noqa: ensure models registered
-from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users
+from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat
+
+# 应用版本（可通过环境变量 APP_VERSION 覆盖，便于灰度/环境标记；默认与需求说明书 V1.3 对齐）
+APP_VERSION = os.getenv("APP_VERSION", "V1.3")
 
 # 创建表（演示用；生产请用 Alembic 迁移）
 Base.metadata.create_all(bind=engine)
@@ -23,7 +26,7 @@ migrate()  # 为已存在表补齐新列（CRM 功能需要）
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lvguanjia")
 
-app = FastAPI(title="旅途管家 API", version="1.3")
+app = FastAPI(title="旅途管家 API", version=APP_VERSION)
 
 # ---------- CORS（安全收紧）----------
 # 规则：明确白名单优于 "*"。当配置为 "*" 时不带 credentials（浏览器本就不允许
@@ -110,6 +113,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
+@app.get("/api/version")
+def api_version():
+    """公开接口：返回当前后端应用版本，供管理后台左侧展示版本号。"""
+    return {"version": APP_VERSION}
+
+
 app.include_router(routes.router)
 app.include_router(orders.router)
 app.include_router(consult.router)
@@ -120,6 +129,7 @@ app.include_router(banners.router)
 app.include_router(favorites.router)
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(chat.router)
 
 # 本地上传的静态资源（封面图等）：/static/covers/xxx.jpg
 os.makedirs(upload.STATIC_DIR, exist_ok=True)

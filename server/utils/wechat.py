@@ -72,3 +72,36 @@ def send_subscribe_message(openid, data, page="pages/myConsult/myConsult"):
     except Exception as e:  # noqa: BLE001
         logger.warning("微信订阅消息请求异常: %s", e)
     return False
+
+
+def send_custom_message(openid, content):
+    """向用户下发客服消息（文本）。用于管理员在后台回复客户。
+
+    前置：用户需在 48 小时内与小程序客服有过交互（微信限制）。
+    失败返回 False，调用方不应依赖其成功（如超时被微信拒收）。
+    """
+    token = _get_access_token()
+    if not token:
+        logger.info("微信客服消息未配置(appid/secret)，跳过下发")
+        return False
+    if not openid or not content:
+        return False
+    payload = {
+        "touser": openid,
+        "msgtype": "text",
+        "text": {"content": content},
+    }
+    url = f"https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token={token}"
+    try:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(
+            url, data=body, headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+        if result.get("errcode") == 0:
+            return True
+        logger.warning("微信客服消息下发失败: %s", result)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("微信客服消息请求异常: %s", e)
+    return False

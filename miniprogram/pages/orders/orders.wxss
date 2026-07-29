@@ -1,1 +1,12 @@
 /* pages/orders/orders.wxss */
+.page { padding: 24rpx; }
+.empty { margin-top: 120rpx; text-align: center; color: #9ca3af; font-size: 26rpx; }
+.card { background: #fff; border-radius: 16rpx; margin-bottom: 20rpx; padding: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+.row { display: flex; align-items: center; }
+.between { justify-content: space-between; }
+.title { font-size: 30rpx; font-weight: 600; color: #1f2937; }
+.status { font-size: 24rpx; color: #1677ff; background: #e6f4ff; padding: 2rpx 14rpx; border-radius: 8rpx; }
+.sub { font-size: 24rpx; color: #9ca3af; }
+.price-sm { font-size: 30rpx; font-weight: 600; color: #ff7a00; }
+.card-foot { display: flex; justify-content: flex-end; margin-top: 16rpx; }
+.link-danger { font-size: 26rpx; color: #f5222d; }

@@ -28,9 +28,10 @@
           <el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120">
+      <el-table-column label="操作" width="180">
         <template #default="{ row }">
           <el-button size="small" type="primary" @click="openDetail(row)">详情</el-button>
+          <el-button size="small" type="danger" @click="del(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -51,7 +52,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../api'
 import OrderDetail from './OrderDetail.vue'
 import { maskPhone } from '../utils/mask'
@@ -111,6 +112,24 @@ function onPage(p) {
 const openDetail = (row) => {
   detailId.value = row.id
   detailVisible.value = true
+}
+
+// 删除订单（软删除：列表不再展示，但保留审计与支付记录）
+function del(row) {
+  ElMessageBox.confirm(
+    `确认删除订单 ${row.order_no}（${row.name || '匿名'}）？删除后列表不再显示，但保留数据可追溯。`,
+    '删除确认',
+    { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+  ).then(() => api.deleteOrder(row.id))
+    .then(() => {
+      ElMessage.success('已删除')
+      load()
+    })
+    .catch((e) => {
+      if (e !== 'cancel' && e !== 'close') {
+        ElMessage.error('删除失败：' + (e.response?.data?.detail || e.message))
+      }
+    })
 }
 
 onMounted(load)

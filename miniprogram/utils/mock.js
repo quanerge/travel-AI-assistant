@@ -72,6 +72,9 @@ function getOrders() { return Promise.resolve(orders) }
 function getOrderDetail(id) {
   return Promise.resolve(orders.find(o => o.id === Number(id)) || null)
 }
+function deleteOrder(id) {
+  return Promise.resolve({ id, is_deleted: true })
+}
 function submitConsult(payload) {
   return Promise.resolve(Object.assign({ id: ++orderSeq, status: 'pending_confirm' }, payload))
 }
@@ -166,7 +169,7 @@ function getFavorites() {
 
 module.exports = {
   getRoutes, getRouteDetail, getBanners, submitSignup, submitPlan,
-  getOrders, getOrderDetail, submitConsult, registerCustomer,
+  getOrders, getOrderDetail, deleteOrder, submitConsult, registerCustomer,
   wxLogin, updateCustomer, toggleFavorite, getFavorites, routes,
   getMyConsults, getConsultUnread, markConsultRead, toOrder, deleteConsult
 }

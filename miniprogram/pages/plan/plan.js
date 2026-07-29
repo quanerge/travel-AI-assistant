@@ -1,25 +1,62 @@
-// pages/plan/plan.js —— MVP：智能需求提交（替代 AI 自动规划，见需求 7.3）
+// pages/plan/plan.js —— 智能行程规划/线路设计（MVP：需求提交，由顾问人工回执）
 const api = require('../../utils/api')
 
-const destinations = ['不限', '云南', '新疆', '西藏', '四川', '境外']
-const dayOptions = ['不限', '3-5天', '6-8天', '9-15天', '15天以上']
-const personOptions = ['1人', '夫妻2人', '亲子3人', '朋友4人+']
+// 目的地：下拉单选（默认空，需选择）
+const destinations = ['云南', '新疆', '西藏', '四川', '海南', '境外']
+// 预算：下拉单选（可不选，默认"不限"）
 const budgetOptions = ['不限', '3000以内', '3000-6000', '6000-10000', '10000以上']
 const interests = ['自然', '美食', '摄影', '亲子', '人文', '自驾']
 
 Page({
   data: {
-    destinations, dayOptions, personOptions, budgetOptions,
+    destinations, budgetOptions,
     interestList: interests.map(n => ({ name: n, on: false })),
-    form: { destination: '不限', days: '不限', person: '夫妻2人', budget: '不限', interest: [] },
+    // 步进器边界
+    minDays: 1, maxDays: 30,
+    minPerson: 1, maxPerson: 20,
+    // picker 选中索引
+    destIndex: 0,
+    budgetIndex: 0,
+    form: {
+      destination: '',   // 空 = 未选，提交时需校验
+      days: 5,            // 最少天数（数字）
+      person: 2,          // 出行人数（数字）
+      budget: '不限',
+      interest: []
+    },
     submitted: false,
     submitting: false,
     submitCount: 0
   },
 
-  pick(e) {
-    const { field, value } = e.currentTarget.dataset
-    this.setData({ ['form.' + field]: value })
+  // 目的地下拉
+  onDest(e) {
+    const i = Number(e.detail.value)
+    this.setData({ destIndex: i, 'form.destination': this.data.destinations[i] })
+  },
+
+  // 预算下拉
+  onBudget(e) {
+    const i = Number(e.detail.value)
+    this.setData({ budgetIndex: i, 'form.budget': this.data.budgetOptions[i] })
+  },
+
+  // 最少天数步进
+  stepDays(e) {
+    const d = Number(e.currentTarget.dataset.d)
+    const { days, minDays, maxDays } = this.data
+    const next = days + d
+    if (next < minDays || next > maxDays) return
+    this.setData({ 'form.days': next })
+  },
+
+  // 出行人数步进
+  stepPerson(e) {
+    const d = Number(e.currentTarget.dataset.d)
+    const { person, minPerson, maxPerson } = this.data
+    const next = person + d
+    if (next < minPerson || next > maxPerson) return
+    this.setData({ 'form.person': next })
   },
 
   toggleInterest(e) {
@@ -34,10 +71,13 @@ Page({
   submit() {
     if (this.data.submitting) return
     const f = this.data.form
+    if (!f.destination) {
+      wx.showToast({ title: '请选择目的地', icon: 'none' }); return
+    }
     if (f.interest.length === 0) {
       wx.showToast({ title: '请至少选择一个兴趣', icon: 'none' }); return
     }
-    const content = `目的地：${f.destination}；时间：${f.days}；人数：${f.person}；预算：${f.budget}；兴趣：${f.interest.join('、')}`
+    const content = `目的地：${f.destination}；最少天数：${f.days}天；出行人数：${f.person}人；预算：${f.budget}；兴趣：${f.interest.join('、')}`
     this.setData({ submitting: true })
     wx.showLoading({ title: '提交中', mask: true })
     api.submitPlan(Object.assign({ channel: '智能规划', content }, f))

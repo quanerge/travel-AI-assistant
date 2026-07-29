@@ -1,6 +1,44 @@
 /* pages/routes/routes.wxss */
-.search { background: #fff; border-radius: 48rpx; padding: 16rpx 32rpx; margin-bottom: 16rpx; }
-.search input { font-size: 28rpx; }
+.search {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 48rpx;
+  padding: 16rpx 32rpx;
+  margin-bottom: 16rpx;
+}
+.search-ico { font-size: 28rpx; margin-right: 12rpx; color: var(--text-sub); }
+.search input { flex: 1; font-size: 28rpx; }
+
+/* 筛选区 */
+.filters {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 4rpx 24rpx 20rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+.filters-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18rpx 0 6rpx;
+}
+.filters-title { font-size: 28rpx; font-weight: 600; color: var(--text); }
+.reset { font-size: 24rpx; color: var(--primary); }
+.fgroup { padding: 14rpx 0; }
+.flabel { font-size: 24rpx; color: var(--text-sub); margin-bottom: 14rpx; }
+.opts { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.opt {
+  padding: 10rpx 26rpx;
+  background: #F2F4F8;
+  border-radius: 40rpx;
+  font-size: 25rpx;
+  color: var(--text-sub);
+}
+.opt-on { background: var(--primary); color: #fff; }
+
+/* 分类横向滚动 */
 .cats { white-space: nowrap; margin-bottom: 16rpx; }
 .cat {
   display: inline-block; padding: 10rpx 28rpx; margin-right: 16rpx;
@@ -8,6 +46,7 @@
 }
 .cat-on { background: var(--primary); color: #fff; }
 
+/* 线路卡片 */
 .route-item { display: flex; }
 .ri-cover {
   width: 200rpx; height: 160rpx; border-radius: 12rpx; background: #EAF2FF;

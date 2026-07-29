@@ -1,51 +1,70 @@
 <!-- pages/plan/plan.wxml -->
 <view class="page">
-  <view class="card" style="background:linear-gradient(135deg,#2B7FFF,#5AA0FF);color:#fff;">
-    <view class="title" style="color:#fff;">智能行程规划</view>
-    <view class="sub" style="color:#fff;opacity:.9;">顾问 1v1 帮您规划，提交后 24h 内回执方案</view>
+  <view class="hero">
+    <view class="hero-title">智能行程规划</view>
+    <view class="hero-sub">专属顾问 1v1 为您定制 · 提交后 24h 内回执方案</view>
   </view>
 
   <block wx:if="{{!submitted}}">
-    <view class="card">
-      <view class="field-label">目的地</view>
-      <view class="opts">
-        <view wx:for="{{destinations}}" wx:key="*this" class="opt {{form.destination===item?'opt-on':''}}" data-field="destination" data-value="{{item}}" bindtap="pick">{{item}}</view>
+    <view class="form-card">
+      <!-- 目的地：下拉选择 -->
+      <view class="field">
+        <view class="field-label"><text class="req">*</text>目的地</view>
+        <picker class="picker" mode="selector" range="{{destinations}}" value="{{destIndex}}" bindchange="onDest">
+          <view class="picker-val {{form.destination ? '' : 'placeholder'}}">
+            <text>{{form.destination || '请选择目的地'}}</text>
+            <text class="chev">▾</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 最少天数：步进器 -->
+      <view class="field">
+        <view class="field-label">最少天数</view>
+        <view class="stepper">
+          <view class="step-btn {{form.days <= minDays ? 'disabled' : ''}}" bindtap="stepDays" data-d="-1">−</view>
+          <view class="step-val"><text class="num">{{form.days}}</text><text class="unit">天</text></view>
+          <view class="step-btn {{form.days >= maxDays ? 'disabled' : ''}}" bindtap="stepDays" data-d="1">+</view>
+        </view>
+      </view>
+
+      <!-- 出行人数：步进器 -->
+      <view class="field">
+        <view class="field-label">出行人数</view>
+        <view class="stepper">
+          <view class="step-btn {{form.person <= minPerson ? 'disabled' : ''}}" bindtap="stepPerson" data-d="-1">−</view>
+          <view class="step-val"><text class="num">{{form.person}}</text><text class="unit">人</text></view>
+          <view class="step-btn {{form.person >= maxPerson ? 'disabled' : ''}}" bindtap="stepPerson" data-d="1">+</view>
+        </view>
+      </view>
+
+      <!-- 预算：下拉选择 -->
+      <view class="field no-border">
+        <view class="field-label">预算范围</view>
+        <picker class="picker" mode="selector" range="{{budgetOptions}}" value="{{budgetIndex}}" bindchange="onBudget">
+          <view class="picker-val {{form.budget ? '' : 'placeholder'}}">
+            <text>{{form.budget || '请选择预算'}}</text>
+            <text class="chev">▾</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 兴趣：多选 -->
+      <view class="field-block">
+        <view class="field-label"><text class="req">*</text>兴趣偏好<text class="hint">（可多选）</text></view>
+        <view class="chips">
+          <view wx:for="{{interestList}}" wx:key="name"
+                class="chip {{item.on ? 'chip-on' : ''}}"
+                data-name="{{item.name}}" bindtap="toggleInterest">{{item.name}}</view>
+        </view>
       </view>
     </view>
 
-    <view class="card">
-      <view class="field-label">时间</view>
-      <view class="opts">
-        <view wx:for="{{dayOptions}}" wx:key="*this" class="opt {{form.days===item?'opt-on':''}}" data-field="days" data-value="{{item}}" bindtap="pick">{{item}}</view>
-      </view>
-    </view>
-
-    <view class="card">
-      <view class="field-label">人数</view>
-      <view class="opts">
-        <view wx:for="{{personOptions}}" wx:key="*this" class="opt {{form.person===item?'opt-on':''}}" data-field="person" data-value="{{item}}" bindtap="pick">{{item}}</view>
-      </view>
-    </view>
-
-    <view class="card">
-      <view class="field-label">预算</view>
-      <view class="opts">
-        <view wx:for="{{budgetOptions}}" wx:key="*this" class="opt {{form.budget===item?'opt-on':''}}" data-field="budget" data-value="{{item}}" bindtap="pick">{{item}}</view>
-      </view>
-    </view>
-
-    <view class="card">
-      <view class="field-label">兴趣（可多选）</view>
-      <view class="opts">
-        <view wx:for="{{interestList}}" wx:key="name" class="opt {{item.on?'opt-on':''}}" data-name="{{item.name}}" bindtap="toggleInterest">{{item.name}}</view>
-      </view>
-    </view>
-
-    <button class="btn btn-primary btn-block" bindtap="submit">生成行程需求单</button>
-    <view class="sub center" style="margin-top:16rpx;">AI 自动规划将于后续版本上线，当前由专属顾问为您服务</view>
+    <button class="btn btn-primary btn-block submit-btn" bindtap="submit">生成行程需求单</button>
+    <view class="tip">AI 自动规划将于后续版本上线，当前由专属顾问为您服务</view>
   </block>
 
-  <view wx:else class="card center" style="padding:60rpx 24rpx;">
+  <view wx:else class="card center done">
     <view style="font-size:64rpx;">✅</view>
     <view class="title" style="margin:16rpx 0;">需求已提交</view>
     <view class="sub">顾问将在 24 小时内通过微信与您联系，请留意消息</view>

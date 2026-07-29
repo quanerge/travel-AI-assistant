@@ -130,6 +130,8 @@ class OrderOut(BaseModel):
     status: str
     deposit_paid: bool
     total_amount: Optional[float] = None
+    is_deleted: Optional[bool] = None
+    deleted_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     @field_validator("phone", mode="before")

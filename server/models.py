@@ -98,6 +98,8 @@ class Order(Base):
     deposit_amount = Column(Float, default=0)
     deposit_paid = Column(Boolean, default=False)
     total_amount = Column(Float, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)  # 软删除标记（保留审计与支付记录）
+    deleted_at = Column(DateTime, nullable=True)                     # 删除时间
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -208,4 +210,18 @@ class Favorite(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     route_id = Column(Integer, ForeignKey("route.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ChatMessage(Base):
+    """微信客服消息回传：客户在客服会话发的消息经微信回调存入此处；
+    管理员在后台的回复也存入此处（direction=out）。"""
+    __tablename__ = "chat_message"
+    id = Column(Integer, primary_key=True, index=True)
+    openid = Column(String(64), index=True, nullable=False)   # 微信用户 openid（与 user.openid 一致）
+    direction = Column(String(8), default="in")               # in=客户→管理员 / out=管理员→客户
+    msg_type = Column(String(16), default="text")             # 首版仅 text；后续可扩展 image/voice
+    content = Column(Text, nullable=True)                     # 文本消息内容
+    admin_id = Column(Integer, nullable=True)                 # 回复的管理员 id（仅 out 消息）
+    is_read = Column(Boolean, default=False, nullable=False)  # 客户消息是否已读（in 消息用于未读红点）
     created_at = Column(DateTime, default=datetime.utcnow)

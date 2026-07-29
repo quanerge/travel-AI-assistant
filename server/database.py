@@ -47,13 +47,16 @@ def migrate():
         ("consult_record", "deleted_at", "DATETIME"),
         ("admin_user", "status", "VARCHAR(16)"),
         ("admin_user", "phone", "VARCHAR(32)"),
+        ("order", "is_deleted", "INTEGER"),
+        ("order", "deleted_at", "DATETIME"),
     ]
     conn = engine.raw_connection()
     try:
         cur = conn.cursor()
         for table, col, ctype in alters:
             try:
-                cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ctype}")
+                # 表名加双引号转义（order 是 SQLite 保留字，必须引号；其余表加引号也安全）
+                cur.execute(f'ALTER TABLE "{table}" ADD COLUMN {col} {ctype}')
             except (OperationalError, sqlite3.OperationalError):
                 # 列已存在（或表结构已是最新），忽略。
                 # raw_connection 抛的是底层 sqlite3.OperationalError，必须一并捕获。
