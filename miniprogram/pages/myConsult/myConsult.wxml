@@ -1,0 +1,73 @@
+<!-- pages/myConsult/myConsult.wxml -->
+<view class="page">
+  <view class="header">
+    <text class="title">我的咨询</text>
+    <text class="sub">提交需求单后，顾问回复与方案将在这里显示</text>
+  </view>
+
+  <view wx:if="{{!list.length && !loading}}" class="empty">
+    <text class="empty-text">还没有咨询记录</text>
+    <button class="btn btn-primary" bindtap="goConsult">去提交需求单</button>
+  </view>
+
+  <view wx:for="{{list}}" wx:key="id" class="card">
+    <view class="card-head" bindtap="toggle" data-id="{{item.id}}">
+      <view class="head-left">
+        <text class="channel">{{item.channel || '咨询'}}</text>
+        <text class="status status-{{item.status}}">{{item.statusText}}</text>
+        <text wx:if="{{item.reply_at && !item.customer_read_at}}" class="dot" />
+      </view>
+      <text class="arrow">{{openId === item.id ? '收起' : '查看'}}</text>
+    </view>
+
+    <view wx:if="{{openId === item.id}}" class="card-body">
+      <view class="row">
+        <text class="label">需求内容</text>
+        <text class="value">{{item.content || '—'}}</text>
+      </view>
+      <view class="row" wx:if="{{item.route_name}}">
+        <text class="label">关联线路</text>
+        <text class="value">{{item.route_name}}</text>
+      </view>
+
+      <!-- 顾问方案正文 -->
+      <view class="row reply" wx:if="{{item.reply_content}}">
+        <text class="label">顾问方案</text>
+        <text class="value">{{item.reply_content}}</text>
+      </view>
+      <view wx:if="{{!item.reply_content}}" class="pending-tip">顾问正在处理中，请稍候…</view>
+
+      <!-- P3：行程卡片时间线 -->
+      <view wx:if="{{item.itinerary && item.itinerary.length}}" class="block">
+        <text class="block-title">行程卡片</text>
+        <view wx:for="{{item.itinerary}}" wx:for-item="it" wx:key="day" class="iti">
+          <view class="iti-day">D{{it.day}}</view>
+          <view class="iti-main">
+            <text class="iti-title">{{it.title}}</text>
+            <text class="iti-desc">{{it.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- P3：方案附件画廊 -->
+      <view wx:if="{{item.attachments && item.attachments.length}}" class="block">
+        <text class="block-title">方案附件</text>
+        <view class="gallery">
+          <image wx:for="{{item.attachments}}" wx:for-item="img" wx:key="*this"
+                 class="thumb" src="{{img}}" mode="aspectFill" bindtap="previewImage"
+                 data-urls="{{item.attachments}}" data-src="{{img}}" />
+        </view>
+      </view>
+
+      <!-- 操作区：下单 / 删除 -->
+      <view class="actions">
+        <button wx:if="{{item.status === 'replied'}}" class="btn-order"
+                loading="{{convertingId === item.id}}" bindtap="toOrder" data-id="{{item.id}}">
+          对此方案下单
+        </button>
+        <text wx:if="{{item.status !== 'done'}}" class="link-danger" bindtap="deleteConsult" data-id="{{item.id}}">删除此咨询</text>
+        <text wx:if="{{item.status === 'done'}}" class="link-disabled">已转为订单，不可删除</text>
+      </view>
+    </view>
+  </view>
+</view>

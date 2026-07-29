@@ -12,7 +12,8 @@
     "pages/consult/consult",
     "pages/favorites/favorites",
     "pages/about/about",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/myConsult/myConsult"
   ],
   "window": {
     "backgroundTextStyle": "light",

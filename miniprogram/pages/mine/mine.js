@@ -1,10 +1,12 @@
 // pages/mine/mine.js
 const app = getApp()
+const api = require('../../utils/api')
 
 Page({
   data: {
     userInfo: null, isLogin: false,
-    birthday: '', birthdayTip: '', birthdaySoon: false
+    birthday: '', birthdayTip: '', birthdaySoon: false,
+    unreadCount: 0
   },
 
   onShow() {
@@ -22,6 +24,12 @@ Page({
       birthdayTip: tip,
       birthdaySoon: soon
     })
+    // 拉取未读咨询数（顾问已回复但未查看），用于红点提示
+    if (app.globalData.isLogin) {
+      api.getConsultUnread().then(r => this.setData({ unreadCount: (r && r.count) || 0 })).catch(() => {})
+    } else {
+      this.setData({ unreadCount: 0 })
+    }
   },
 
   // 计算生日相对今天的偏移：0=今天, 1=明天, -1=非临近
@@ -45,6 +53,7 @@ Page({
   goPlan() { wx.switchTab({ url: '/pages/plan/plan' }) },
   goFavorites() { wx.navigateTo({ url: '/pages/favorites/favorites' }) },
   goAbout() { wx.navigateTo({ url: '/pages/about/about' }) },
+  goMyConsult() { wx.navigateTo({ url: '/pages/myConsult/myConsult' }) },
 
   logout() {
     wx.showModal({

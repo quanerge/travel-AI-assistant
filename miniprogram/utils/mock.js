@@ -75,6 +75,37 @@ function getOrderDetail(id) {
 function submitConsult(payload) {
   return Promise.resolve(Object.assign({ id: ++orderSeq, status: 'pending_confirm' }, payload))
 }
+function getMyConsults() {
+  // 演示用：带一条已回复、含附件与行程卡片的需求单，便于预览 P2/P3 效果
+  return Promise.resolve([
+    {
+      id: 1, channel: '智能需求单', status: 'replied',
+      name: '张女士', phone: '13800001111',
+      content: '想带父母去云南，7 天左右，节奏慢一点，预算 3000/人。',
+      route_name: '云南8日深度游',
+      reply_content: '已为您定制大理+丽江慢节奏 8 日方案，含洱海民宿与玉龙雪山，详见行程卡片与附件报价单。',
+      reply_at: '2026-07-29 10:20', customer_read_at: null, created_at: '2026-07-28 21:05',
+      attachments: ['https://picsum.photos/seed/quote1/600/400', 'https://picsum.photos/seed/quote2/600/400'],
+      itinerary: [
+        { day: 1, title: '抵达大理', desc: '专车接机，入住洱海民宿，自由漫步双廊。' },
+        { day: 2, title: '洱海环湖', desc: '骑行环海，打卡小普陀，含早晚餐。' },
+        { day: 3, title: '前往丽江', desc: '动车至丽江，游览古城，晚上观赏《丽江千古情》。' }
+      ]
+    }
+  ])
+}
+function getConsultUnread() {
+  return Promise.resolve({ count: 1 })
+}
+function markConsultRead() {
+  return Promise.resolve({})
+}
+function deleteConsult(id) {
+  return Promise.resolve({ id, is_deleted: true })
+}
+function toOrder(consultId, payload) {
+  return Promise.resolve({ id: ++orderSeq, order_no: 'NO' + Date.now(), status: 'pending_confirm', route_id: 1, name: '张女士', phone: '13800001111', person_count: payload && payload.person_count || 2, total_amount: 5998 })
+}
 function registerCustomer(payload) {
   const openid = payload.openid || ''
   // 按手机号或 openid 去重，模拟幂等注册
@@ -136,5 +167,6 @@ function getFavorites() {
 module.exports = {
   getRoutes, getRouteDetail, getBanners, submitSignup, submitPlan,
   getOrders, getOrderDetail, submitConsult, registerCustomer,
-  wxLogin, updateCustomer, toggleFavorite, getFavorites, routes
+  wxLogin, updateCustomer, toggleFavorite, getFavorites, routes,
+  getMyConsults, getConsultUnread, markConsultRead, toOrder, deleteConsult
 }

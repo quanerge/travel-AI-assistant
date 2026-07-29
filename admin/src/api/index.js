@@ -77,6 +77,8 @@ export const api = {
   addFollowUp: (id, content) => http.post(`/customers/${id}/follow-ups`, { content }),
 
   listConsults: (params) => listRes('/consult', params),
+  updateConsult: (id, data) => http.put(`/consult/${id}`, data),
+  deleteConsult: (id) => http.post(`/consult/${id}/delete`),
   getMe: () => http.get('/auth/me'),
 
   // 系统设置

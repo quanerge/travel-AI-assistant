@@ -121,6 +121,7 @@ class OrderOut(BaseModel):
     id: int
     order_no: str
     route_id: Optional[int] = None
+    route_name: Optional[str] = None
     name: str
     phone: str
     person_count: int
@@ -151,9 +152,46 @@ class ConsultOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     channel: str
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    route_id: Optional[int] = None
+    route_name: Optional[str] = None
     content: Optional[str] = None
     status: str
+    handled_by: Optional[int] = None
+    reply_content: Optional[str] = None
+    reply_at: Optional[datetime] = None
+    customer_read_at: Optional[datetime] = None
+    attachments: Optional[list] = None        # 方案附件图片 URL 列表
+    itinerary: Optional[list] = None          # 行程卡片：[{day, title, desc}]
+    is_deleted: Optional[bool] = None         # 软删除标记
+    deleted_at: Optional[datetime] = None     # 删除时间
     created_at: Optional[datetime] = None
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def _dec_consult_phone(cls, v):
+        """DB 中手机号按 enc: 前缀加密存储，读取时解密还原。"""
+        return decrypt_phone(v)
+
+
+class ConsultUpdate(BaseModel):
+    status: Optional[str] = None
+    handled_by: Optional[int] = None
+    reply_content: Optional[str] = None
+    attachments: Optional[list] = None        # 方案附件图片 URL 列表
+    itinerary: Optional[list] = None          # 行程卡片：[{day, title, desc}]
+
+
+class ConsultToOrder(BaseModel):
+    """小程序「对此方案下单」：从需求单一键转为订单。
+
+    姓名/手机/线路取自该需求单（缺省时回退到关联客户），此处仅补充
+    出行人数、出发日期、备注等下单必要项。
+    """
+    person_count: Optional[int] = 1
+    departure_date: Optional[str] = None
+    remark: Optional[str] = None
 
 
 class CustomerOut(BaseModel):

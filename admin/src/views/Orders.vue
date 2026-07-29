@@ -9,6 +9,9 @@
     <el-table :data="rows" v-loading="loading" border>
       <el-table-column prop="order_no" label="订单号" width="160" />
       <el-table-column prop="name" label="客户" width="100" />
+      <el-table-column label="线路" min-width="150" show-overflow-tooltip>
+        <template #default="{ row }">{{ row.route_name || '—' }}</template>
+      </el-table-column>
       <el-table-column label="手机" width="170">
         <template #default="{ row }">
           <span>{{ revealed[row.id] ? row.phone : maskPhone(row.phone) }}</span>

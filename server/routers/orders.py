@@ -14,6 +14,16 @@ from models import AdminUser, User
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
 
+def _attach_route_name(db: Session, orders):
+    """给订单对象批量挂上 route_name（按 route_id 一次查询映射，避免 N+1）。"""
+    ids = {getattr(o, "route_id", None) for o in orders if getattr(o, "route_id", None)}
+    if ids:
+        mapping = {r.id: r.name for r in db.query(Route.id, Route.name).filter(Route.id.in_(ids)).all()}
+        for o in orders:
+            o.route_name = mapping.get(o.route_id)
+    return orders
+
+
 @router.post("", response_model=OrderOut)
 def create_order(payload: OrderCreate, current_user: User = Depends(get_current_user),
                 db: Session = Depends(get_db)):
@@ -61,6 +71,7 @@ def list_orders(principal=Depends(get_principal), user_id: int = None,
         q = q.filter(Order.user_id == user_id)
     total, items = paginate(q.order_by(Order.id.desc()), page, page_size)
     set_pagination_headers(response, page, page_size, total)
+    _attach_route_name(db, items)
     return items
 
 
@@ -72,6 +83,7 @@ def get_order(order_id: int, principal=Depends(get_principal), db: Session = Dep
         raise HTTPException(404, "订单不存在")
     if role == "user" and o.user_id != obj.id:
         raise HTTPException(403, "无权查看该订单")
+    _attach_route_name(db, [o])
     return o
 
 

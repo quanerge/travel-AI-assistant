@@ -11,6 +11,7 @@ router = APIRouter(prefix="/api/upload", tags=["upload"])
 # server/static —— 后端对外提供静态资源的根目录（需在 main.py 中挂载 StaticFiles）
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 COVER_DIR = os.path.join(STATIC_DIR, "covers")
+ATTACHMENT_DIR = os.path.join(STATIC_DIR, "attachments")
 
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
@@ -31,3 +32,23 @@ async def upload_cover(file: UploadFile = File(...),
         f.write(content)
     # 返回相对路径，前端按自身域名/后端地址拼接即可（小程序侧会自动补后端前缀）
     return {"url": f"/static/covers/{name}"}
+
+
+@router.post("/file")
+async def upload_file(file: UploadFile = File(...),
+                     _admin=Depends(get_current_admin)):
+    """顾问上传方案附件（图片）：保存到 server/static/attachments/，返回相对 URL。
+
+    仅管理员可上传。附件以图片为主（行程单/报价单拍照等），便于小程序客户直接查看。
+    """
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_EXT:
+        raise HTTPException(400, "仅支持 jpg / png / webp / gif 图片")
+    content = await file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(400, "图片不能超过 5MB")
+    os.makedirs(ATTACHMENT_DIR, exist_ok=True)
+    name = uuid.uuid4().hex + ext
+    with open(os.path.join(ATTACHMENT_DIR, name), "wb") as f:
+        f.write(content)
+    return {"url": f"/static/attachments/{name}"}

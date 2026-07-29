@@ -27,6 +27,10 @@
     <view class="menu-item" bindtap="goOrders">📋 我的订单 <text class="sub">></text></view>
     <view class="menu-item" wx:if="{{isLogin}}" bindtap="goFavorites">⭐ 我的收藏 <text class="sub">></text></view>
     <view class="menu-item" bindtap="goPlan">🧭 智能规划 <text class="sub">></text></view>
+    <view class="menu-item" wx:if="{{isLogin}}" bindtap="goMyConsult">📨 我的咨询
+      <text wx:if="{{unreadCount > 0}}" style="background:#f5222d;color:#fff;font-size:20rpx;min-width:28rpx;height:28rpx;border-radius:14rpx;padding:0 6rpx;margin-left:8rpx;text-align:center;line-height:28rpx;">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
+      <text class="sub">></text>
+    </view>
     <view class="menu-item" bindtap="goConsult">💬 客服中心 <text class="sub">></text></view>
     <view class="menu-item" bindtap="goAbout">ℹ️ 关于顾问 <text class="sub">></text></view>
     <view class="menu-item" wx:if="{{isLogin}}" bindtap="logout">🚪 退出登录 <text class="sub">></text></view>

@@ -163,7 +163,10 @@ def create_customer(payload: CustomerCreate, _admin=Depends(get_current_admin),
 def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
     """小程序客户自助注册：创建 User + 关联 Customer（CRM 归集）。
 
-    按手机号去重：已存在客户直接返回（幂等），避免重复建档。
+    幂等规则（避免 User.openid 唯一约束冲突导致的 409 数据冲突）：
+    - 同一手机号已建档 -> 直接复用该客户，仅补绑微信身份/首次生日后返回，绝不新建 User；
+    - 该微信身份(openid)已存在 -> 复用其 User，仅新建并关联 Customer；
+    - 都不存在 -> 新建 User + Customer。
     若传入 openid，则把该微信身份绑定到客户对应的 User 上，
     使静默登录(wx-login)能据此找回客户、退出后自动恢复登录态。
     """
@@ -176,14 +179,28 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
     if payload.birthday and not birthday:
         raise HTTPException(400, "生日格式应为 MM-DD（如 03-15）")
 
-    existing = db.query(Customer).filter(Customer.phone == encrypt_phone(payload.phone)).first()
+    enc_phone = encrypt_phone(payload.phone)
+
+    # 1) 同一手机号已建档 -> 复用客户，绝不新建 User（避免 openid 唯一冲突）
+    existing = db.query(Customer).filter(Customer.phone == enc_phone).first()
     if existing:
-        # 已注册：补绑定 openid（若缺失），便于后续静默登录找回
-        if payload.openid and existing.user_id:
-            u = db.query(User).filter(User.id == existing.user_id).first()
-            if u and not u.openid:
-                u.openid = payload.openid
+        if payload.openid:
+            owner = db.query(User).filter(User.openid == payload.openid).first()
+            if owner:
+                # 该微信身份已被占用 -> 归并到该 User
+                existing.user_id = owner.id
+            elif existing.user_id:
+                u = db.query(User).filter(User.id == existing.user_id).first()
+                if u and not u.openid:
+                    u.openid = payload.openid
+            else:
+                u = User(nickname=payload.nickname, phone=enc_phone,
+                         openid=payload.openid, status="active")
+                db.add(u)
                 db.commit()
+                db.refresh(u)
+                existing.user_id = u.id
+            db.commit()
         # 首次补全生日（若历史未填）
         if birthday and not existing.birthday:
             existing.birthday = birthday
@@ -198,20 +215,25 @@ def register_customer(payload: CustomerRegister, db: Session = Depends(get_db)):
             already_registered=True,
         )
 
-    user = User(
-        nickname=payload.nickname,
-        phone=encrypt_phone(payload.phone),
-        openid=payload.openid,
-        status="active",
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    # 2) 手机号未建档：优先复用已存在的微信身份，否则新建 User（openid 已确认不冲突）
+    user = None
+    if payload.openid:
+        user = db.query(User).filter(User.openid == payload.openid).first()
+    if not user:
+        user = User(
+            nickname=payload.nickname,
+            phone=enc_phone,
+            openid=payload.openid,
+            status="active",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     cust = Customer(
         user_id=user.id,
         name=payload.nickname,
-        phone=encrypt_phone(payload.phone),
+        phone=enc_phone,
         wechat_no=payload.wechat_no,
         source="miniprogram",
         travel_preference=payload.travel_preference,

@@ -27,6 +27,26 @@ const api = {
   submitConsult(payload) {
     return useMock ? mock.submitConsult(payload) : request('/consult', 'POST', payload)
   },
+  // 小程序用户查看自己的咨询/需求单及顾问回复
+  getMyConsults() {
+    return useMock ? mock.getMyConsults() : request('/consult/mine')
+  },
+  // 当前用户「顾问已回复、未查看」的咨询数量（用于未读红点）
+  getConsultUnread() {
+    return useMock ? Promise.resolve({ count: 0 }) : request('/consult/unread-count')
+  },
+  // 客户查看方案后标记已读（消除红点）
+  markConsultRead(id) {
+    return useMock ? Promise.resolve({}) : request('/consult/' + id + '/read', 'POST', {})
+  },
+  // 软删除自己的咨询/需求单（已转订单的不允许删）
+  deleteConsult(id) {
+    return useMock ? mock.deleteConsult(id) : request('/consult/' + id + '/delete', 'POST', {})
+  },
+  // P3：小程序「对此方案下单」——把需求单一键转为订单
+  toOrder(consultId, payload) {
+    return useMock ? mock.toOrder(consultId, payload) : request('/consult/' + consultId + '/to-order', 'POST', payload)
+  },
   registerCustomer(payload) {
     return useMock ? mock.registerCustomer(payload) : request('/customers/register', 'POST', payload)
   },

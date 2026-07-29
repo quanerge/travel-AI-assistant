@@ -1,7 +1,7 @@
 # server/models.py —— 对应需求说明书 V1.1 第 9 章数据库设计
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey
+    Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey, JSON
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -155,8 +155,17 @@ class ConsultRecord(Base):
     name = Column(String(64), nullable=True)   # 留言人姓名（用于归集客户）
     phone = Column(String(32), nullable=True)  # 留言人手机（用于归集客户）
     content = Column(Text, nullable=True)
+    route_id = Column(Integer, ForeignKey("route.id"), nullable=True, index=True)
     handled_by = Column(Integer, nullable=True)
     status = Column(String(16), default="pending")
+    reply_content = Column(Text, nullable=True)        # 顾问方案/回复正文
+    reply_at = Column(DateTime, nullable=True)         # 顾问回复时间
+    reply_by = Column(Integer, nullable=True)          # 回复顾问 admin id
+    customer_read_at = Column(DateTime, nullable=True) # 客户已读时间（用于未读红点）
+    attachments = Column(JSON, nullable=True)   # 顾问方案附件（图片 URL 列表）
+    itinerary = Column(JSON, nullable=True)     # 行程卡片：[{day, title, desc}]
+    is_deleted = Column(Boolean, default=False, nullable=False)  # 软删除标记（保留审计痕迹）
+    deleted_at = Column(DateTime, nullable=True)                     # 删除时间
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

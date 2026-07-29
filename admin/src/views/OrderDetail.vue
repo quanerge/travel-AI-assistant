@@ -8,6 +8,7 @@
             <el-tag :type="statusType(o.status)">{{ statusText(o.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="客户">{{ o.name }}</el-descriptions-item>
+          <el-descriptions-item label="线路">{{ o.route_name || '—' }}</el-descriptions-item>
           <el-descriptions-item label="手机">
             <span>{{ showPhone ? o.phone : maskPhone(o.phone) }}</span>
             <el-button link type="primary" size="small" @click="showPhone = !showPhone">
