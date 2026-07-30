@@ -69,8 +69,10 @@ def create_consult(payload: ConsultCreate, current_user: User = Depends(get_curr
     try:
         db.commit()
     except Exception:
-        # 兜底：库尚未 migrate() 补齐新列时自动补列后重试
+        # 兜底：库尚未 migrate() 补齐新列时自动补列后重试（先回滚，避免悬挂事务）
+        db.rollback()
         migrate()
+        db.add(rec)
         db.commit()
     db.refresh(rec)
     # 归集客户：留言即潜在客户（按姓名/手机匹配，无订单不累加消费）
@@ -150,7 +152,8 @@ def update_consult(consult_id: int, payload: ConsultUpdate,
         db.commit()
     except Exception:
         # 兜底：运行中的库可能尚未执行 migrate() 补齐 P3 新增列（attachments/itinerary），
-        # 自动补列后重试一次，避免「服务器内部错误」。
+        # 自动补列后重试一次，避免「服务器内部错误」。（先回滚，避免悬挂事务）
+        db.rollback()
         migrate()
         db.commit()
     db.refresh(rec)
