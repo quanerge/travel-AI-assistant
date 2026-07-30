@@ -102,7 +102,6 @@ def confirm_deposit(order_id: int, admin: AdminUser = Depends(get_current_admin)
         raise HTTPException(404, "订单不存在")
     o.status = "deposit_received"
     o.deposit_paid = True
-    o.updated_at = None  # trigger onupdate
     db.add(Payment(order_id=o.id, type="deposit", amount=o.deposit_amount or 0,
                    method="offline", status="paid", operator_id=admin.id))
     db.commit()
@@ -161,7 +160,8 @@ def delete_order(order_id: int, db: Session = Depends(get_db),
     try:
         db.commit()
     except Exception:
-        # 兜底：运行中的库可能尚未 migrate() 补齐软删除列，自动补列后重试一次
+        # 兜底：运行中的库可能尚未 migrate() 补齐软删除列，自动补列后重试一次（先回滚）
+        db.rollback()
         migrate()
         db.commit()
     db.refresh(o)
