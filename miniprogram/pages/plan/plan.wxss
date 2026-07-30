@@ -53,6 +53,15 @@
   color: var(--text);
 }
 .picker-val.placeholder { color: var(--text-sub); }
+
+/* 文本输入框（联系人 / 手机号） */
+.text-input {
+  flex: 1;
+  margin-left: 24rpx;
+  text-align: right;
+  font-size: 30rpx;
+  color: var(--text);
+}
 .picker-val .chev {
   color: #C0C4CC;
   font-size: 28rpx;

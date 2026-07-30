@@ -49,6 +49,18 @@
         </picker>
       </view>
 
+      <!-- 联系人：文本输入 -->
+      <view class="field">
+        <view class="field-label"><text class="req">*</text>联系人</view>
+        <input class="text-input" placeholder="您的称呼" value="{{form.name}}" bindinput="onName" maxlength="20" />
+      </view>
+
+      <!-- 手机号：文本输入 -->
+      <view class="field no-border">
+        <view class="field-label"><text class="req">*</text>手机号</view>
+        <input class="text-input" type="number" placeholder="接收方案通知" value="{{form.phone}}" bindinput="onPhone" maxlength="11" />
+      </view>
+
       <!-- 兴趣：多选 -->
       <view class="field-block">
         <view class="field-label"><text class="req">*</text>兴趣偏好<text class="hint">（可多选）</text></view>

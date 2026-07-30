@@ -22,7 +22,9 @@ Page({
       days: 5,            // 最少天数（数字）
       person: 2,          // 出行人数（数字）
       budget: '不限',
-      interest: []
+      interest: [],
+      name: '',           // 联系人姓名（用于一键转订单，避免缺字段无法下单）
+      phone: ''           // 手机号（用于一键转订单 + 方案通知）
     },
     submitted: false,
     submitting: false,
@@ -68,19 +70,35 @@ Page({
     this.setData({ interestList: list, 'form.interest': interest })
   },
 
+  // 联系人姓名
+  onName(e) {
+    this.setData({ 'form.name': e.detail.value })
+  },
+
+  // 手机号
+  onPhone(e) {
+    this.setData({ 'form.phone': e.detail.value })
+  },
+
   submit() {
     if (this.data.submitting) return
     const f = this.data.form
     if (!f.destination) {
       wx.showToast({ title: '请选择目的地', icon: 'none' }); return
     }
+    if (!f.name || !f.phone) {
+      wx.showToast({ title: '请填写联系人和手机号', icon: 'none' }); return
+    }
+    if (!/^1\d{10}$/.test(f.phone)) {
+      wx.showToast({ title: '手机号格式有误', icon: 'none' }); return
+    }
     if (f.interest.length === 0) {
       wx.showToast({ title: '请至少选择一个兴趣', icon: 'none' }); return
     }
-    const content = `目的地：${f.destination}；最少天数：${f.days}天；出行人数：${f.person}人；预算：${f.budget}；兴趣：${f.interest.join('、')}`
+    const content = `目的地：${f.destination}；最少天数：${f.days}天；出行人数：${f.person}人；预算：${f.budget}；兴趣：${f.interest.join('、')}；联系人：${f.name}；手机：${f.phone}`
     this.setData({ submitting: true })
     wx.showLoading({ title: '提交中', mask: true })
-    api.submitPlan(Object.assign({ channel: '智能规划', content }, f))
+    api.submitPlan(Object.assign({ channel: '智能规划', content, name: f.name, phone: f.phone }, f))
       .then(() => {
         wx.hideLoading()
         this.setData({ submitted: true, submitCount: this.data.submitCount + 1 })
