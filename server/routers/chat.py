@@ -17,7 +17,7 @@ import hashlib
 import logging
 import xml.etree.ElementTree as ET
 
-from fastapi import APIRouter, Request, Depends, Query
+from fastapi import APIRouter, Request, Depends, Query, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -40,19 +40,21 @@ router = APIRouter(prefix="/api")
 
 @router.get("/wechat/callback")
 def wechat_verify(signature: str = "", timestamp: str = "", nonce: str = "", echostr: str = ""):
-    """微信服务器接入验证：校验 signature 后回显 echostr。
+    """微信服务器接入验证：严格校验 signature，仅匹配时回显 echostr。
 
-    明文模式下微信只要求返回 echostr 即通过；此处做宽松校验，
-    校验失败时仍回显 echostr，避免配置期被卡死。
+    明文模式下微信通过此接口验证服务器地址有效性；校验不通过返回 403，
+    避免 Token 配置错误被「配置成功」掩盖，便于排查。
     """
     try:
         items = sorted([_CALLBACK_TOKEN, timestamp, nonce])
         sha = hashlib.sha1("".join(items).encode("utf-8")).hexdigest()
-        if sha == signature:
-            return Response(content=echostr, media_type="text/plain")
     except Exception as e:  # noqa: BLE001
         logger.warning("微信回调校验异常: %s", e)
-    return Response(content=echostr, media_type="text/plain")
+        sha = ""
+    if sha and sha == signature:
+        return Response(content=echostr, media_type="text/plain")
+    # 校验失败：返回 403，不回显 echostr（微信据此判定配置失败）
+    return Response(content="", status_code=status.HTTP_403_FORBIDDEN, media_type="text/plain")
 
 
 @router.post("/wechat/callback")
