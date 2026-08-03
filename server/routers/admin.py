@@ -101,6 +101,8 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
                 "wechat_no": c.wechat_no,
                 "birthday": c.birthday,
                 "offset": off,
+                "order_count": c.total_orders or 0,
+                "total_spent": round(c.total_amount or 0, 2),
             })
     birthday_reminders.sort(key=lambda x: x["offset"])
 

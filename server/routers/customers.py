@@ -151,6 +151,8 @@ def birthday_reminders(days: int = 1, _admin=Depends(get_current_admin),
                 "wechat_no": c.wechat_no,
                 "birthday": c.birthday,
                 "offset": off,
+                "order_count": c.total_orders or 0,
+                "total_spent": round(c.total_amount or 0, 2),
             })
     # 按临近程度排序：今天优先
     result.sort(key=lambda x: x["offset"])

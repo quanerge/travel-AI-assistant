@@ -12,18 +12,34 @@
         <span class="ba-title">🎂 生日关怀提醒（{{ birthdayReminders.length }} 位客户）</span>
       </template>
       <div class="ba-list">
-        <span
+        <div
           v-for="b in birthdayReminders"
           :key="b.customer_id"
-          class="ba-chip"
+          class="ba-card"
           @click="goCustomers"
         >
-          <b>{{ b.name }}</b>
-          <span class="ba-when" :class="b.offset === 0 ? 'is-today' : ''">
-            {{ b.offset === 0 ? '今天生日' : '明天生日' }}
-          </span>
-          <span class="ba-date">{{ b.birthday }}</span>
-        </span>
+          <div class="ba-avatar">{{ avatarText(b.name) }}</div>
+          <div class="ba-main">
+            <div class="ba-name-row">
+              <b class="ba-name">{{ b.name }}</b>
+              <span class="ba-when" :class="b.offset === 0 ? 'is-today' : ''">
+                {{ b.offset === 0 ? '今天生日' : '明天生日' }}
+              </span>
+            </div>
+            <div class="ba-meta">
+              <span title="生日">🎂 {{ b.birthday }}</span>
+              <span title="手机号">📱 {{ b.phone || '—' }}</span>
+              <span v-if="b.wechat_no" title="微信">💬 {{ b.wechat_no }}</span>
+            </div>
+            <div class="ba-stats">
+              <span>订单 <b>{{ b.order_count }}</b></span>
+              <span>累计消费 <b>¥{{ formatMoney(b.total_spent) }}</b></span>
+            </div>
+          </div>
+          <el-button size="small" type="warning" plain class="ba-go" @click.stop="goCustomers">
+            去关怀
+          </el-button>
+        </div>
       </div>
       <div class="ba-tip">点击客户可前往「客户管理」发送生日祝福或专属优惠</div>
     </el-alert>
@@ -148,6 +164,10 @@ const goOrders = () => router.push('/orders')
 // 点击生日关怀提醒：带 care=birthday 跳转到客户管理，由 CRM 页高亮今天/明天生日的客户
 const goCustomers = () => router.push({ path: '/customers', query: { care: 'birthday' } })
 
+// 头像文字：取客户名首字
+const avatarText = (name) => (name && name.trim() ? name.trim()[0] : '?')
+const formatMoney = (v) => (v == null ? '0.00' : Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+
 onMounted(async () => {
   try {
     d.value = await api.dashboard()
@@ -165,16 +185,28 @@ onMounted(async () => {
 .stat-num { font-size: 30px; font-weight: 700; margin-top: 6px; color: #2b7fff; }
 .birthday-alert { margin-bottom: 16px; }
 .ba-title { font-weight: 700; }
-.ba-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-.ba-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: #fff7e6; border: 1px solid #ffd591; border-radius: 16px;
-  padding: 4px 12px; font-size: 13px; cursor: pointer; transition: .2s;
+.ba-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.ba-card {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff7e6; border: 1px solid #ffd591; border-radius: 12px;
+  padding: 10px 14px; cursor: pointer; transition: .2s; min-width: 280px; flex: 1 1 280px;
 }
-.ba-chip:hover { background: #ffe7ba; }
-.ba-when { color: #fa8c16; font-weight: 600; }
+.ba-card:hover { background: #ffe7ba; box-shadow: 0 2px 10px rgba(250,140,22,.15); }
+.ba-avatar {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #ffa940, #fa8c16); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
+}
+.ba-main { flex: 1; min-width: 0; }
+.ba-name-row { display: flex; align-items: center; gap: 8px; }
+.ba-name { font-size: 15px; color: #262626; }
+.ba-when { font-size: 12px; font-weight: 600; color: #fa8c16; }
 .ba-when.is-today { color: #f5222d; }
-.ba-date { color: #999; }
+.ba-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: 12px; color: #8c6d3f; }
+.ba-stats { display: flex; gap: 16px; margin-top: 6px; font-size: 13px; color: #595959; }
+.ba-stats b { color: #fa8c16; }
+.ba-go { flex: 0 0 auto; }
 .ba-tip { color: #999; font-size: 12px; margin-top: 8px; }
 .todo-row {
   display: flex; justify-content: space-between; align-items: center;
