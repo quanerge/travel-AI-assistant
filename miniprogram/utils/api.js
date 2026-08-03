@@ -72,6 +72,10 @@ const api = {
   },
   getFavorites() {
     return useMock ? mock.getFavorites() : request('/favorites')
+  },
+  // 第二阶段：AI 行程自动规划（大模型在后端调用，小程序只传偏好）
+  aiPlan(payload) {
+    return useMock ? mock.aiPlan(payload) : request('/ai/plan', 'POST', payload)
   }
 }
 

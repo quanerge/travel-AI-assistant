@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from database import get_db
 from models import Customer, FollowUp, User
 from schemas import (
@@ -104,15 +105,20 @@ def upsert_customer_from_contact(db: Session, name: str = None, phone: str = Non
 
 
 @router.get("", response_model=list[CustomerOut])
-def list_customers(tag: str = None, follow_status: str = None,
+def list_customers(tag: str = None, follow_status: str = None, is_key: bool = None,
+                   include_deleted: bool = False,
                    page: int = None, page_size: int = 50,
                    response: Response = None,
                    _admin=Depends(get_current_admin), db: Session = Depends(get_db)):
     q = db.query(Customer)
+    if not include_deleted:
+        q = q.filter(or_(Customer.is_deleted == False, Customer.is_deleted.is_(None)))
     if tag:
         q = q.filter(Customer.tags.contains(tag))
     if follow_status:
         q = q.filter(Customer.follow_status == follow_status)
+    if is_key is not None:
+        q = q.filter(Customer.is_key == is_key)
     total, items = paginate(q.order_by(Customer.id.desc()), page, page_size)
     set_pagination_headers(response, page, page_size, total)
     return items
@@ -267,6 +273,47 @@ def update_customer(customer_id: int, payload: CustomerUpdate,
         if k == "phone" and v is not None:
             v = encrypt_phone(v)
         setattr(cust, k, v)
+    db.commit()
+    db.refresh(cust)
+    return cust
+
+
+@router.post("/{customer_id}/toggle-key", response_model=CustomerOut)
+def toggle_key(customer_id: int, _admin=Depends(get_current_admin),
+               db: Session = Depends(get_db)):
+    """切换重点客户标注（星标）。"""
+    cust = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not cust:
+        raise HTTPException(status_code=404, detail="客户不存在")
+    cust.is_key = not cust.is_key
+    db.commit()
+    db.refresh(cust)
+    return cust
+
+
+@router.post("/{customer_id}/delete", response_model=CustomerOut)
+def delete_customer(customer_id: int, _admin=Depends(get_current_admin),
+                    db: Session = Depends(get_db)):
+    """软删除客户（仅管理员）。关联 user / 订单 / 需求单 / 跟进均保留，仅隐藏。"""
+    cust = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not cust:
+        raise HTTPException(status_code=404, detail="客户不存在")
+    cust.is_deleted = True
+    cust.deleted_at = datetime.utcnow()
+    db.commit()
+    db.refresh(cust)
+    return cust
+
+
+@router.post("/{customer_id}/restore", response_model=CustomerOut)
+def restore_customer(customer_id: int, _admin=Depends(get_current_admin),
+                     db: Session = Depends(get_db)):
+    """从回收站恢复客户（仅管理员）。"""
+    cust = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not cust:
+        raise HTTPException(status_code=404, detail="客户不存在")
+    cust.is_deleted = False
+    cust.deleted_at = None
     db.commit()
     db.refresh(cust)
     return cust

@@ -3,6 +3,10 @@ import os
 import time
 import logging
 from collections import defaultdict, deque
+from dotenv import load_dotenv
+
+load_dotenv()  # 加载 .env（LLM_API_KEY / CORS_ORIGINS / WECHAT_CALLBACK_TOKEN 等），须在其它模块读 env 前执行
+
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from database import engine, Base, migrate
 import models  # noqa: ensure models registered
-from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat
+from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat, ai
 
 # 应用版本（可通过环境变量 APP_VERSION 覆盖，便于灰度/环境标记；默认与需求说明书 V1.3 对齐）
 APP_VERSION = os.getenv("APP_VERSION", "V1.3")
@@ -130,6 +134,7 @@ app.include_router(favorites.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(chat.router)
+app.include_router(ai.router)  # AI 行程自动规划（第二阶段）
 
 # 本地上传的静态资源（封面图等）：/static/covers/xxx.jpg
 os.makedirs(upload.STATIC_DIR, exist_ok=True)

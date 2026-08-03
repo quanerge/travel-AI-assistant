@@ -49,6 +49,10 @@ def migrate():
         ("admin_user", "phone", "VARCHAR(32)"),
         ("order", "is_deleted", "INTEGER"),
         ("order", "deleted_at", "DATETIME"),
+        ("customer", "is_key", "INTEGER"),
+        ("customer", "community", "VARCHAR(128)"),
+        ("customer", "is_deleted", "INTEGER"),
+        ("customer", "deleted_at", "DATETIME"),
     ]
     conn = engine.raw_connection()
     try:
@@ -60,6 +64,14 @@ def migrate():
             except (OperationalError, sqlite3.OperationalError):
                 # 列已存在（或表结构已是最新），忽略。
                 # raw_connection 抛的是底层 sqlite3.OperationalError，必须一并捕获。
+                pass
+        conn.commit()
+        # 历史行经 ALTER COLUMN 新增布尔列后值为 NULL，统一回填为 0（False），
+        # 否则下游 Pydantic 序列化（bool 字段收到 None）会抛 500，导致客户列表整体不可用。
+        for col in ("is_deleted", "is_key"):
+            try:
+                cur.execute(f'UPDATE "customer" SET {col} = 0 WHERE {col} IS NULL')
+            except (OperationalError, sqlite3.OperationalError):
                 pass
         conn.commit()
     finally:

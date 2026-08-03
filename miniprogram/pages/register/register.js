@@ -5,7 +5,32 @@ const app = getApp()
 Page({
   data: {
     form: { nickname: '', phone: '', wechat_no: '', travel_preference: '', budget_range: '', birthday: '' },
-    submitting: false
+    submitting: false,
+    checked: false   // 防「已注册拦截」重复 toast
+  },
+
+  // 已注册用户（含退出后静默登录自动恢复）不应再看到注册表单：直接跳走。
+  // 静默登录是异步的，onLoad 时可能尚未完成，故 onShow 再补判一次。
+  onLoad() {
+    this._checkRegistered()
+  },
+
+  onShow() {
+    if (!this.data.checked) this._checkRegistered()
+  },
+
+  _checkRegistered() {
+    const info = app.globalData.userInfo
+    if (app.globalData.isLogin && info && info.customerId) {
+      this.setData({ checked: true })
+      wx.showToast({ title: '您已注册，自动登录', icon: 'none' })
+      setTimeout(() => {
+        const pages = getCurrentPages()
+        if (pages.length > 1) wx.navigateBack()
+        // 极边缘：注册页作为首页入口时，重新启动到首页（若首页路径不同请调整此处）
+        else wx.reLaunch({ url: '/pages/index/index' })
+      }, 600)
+    }
   },
 
   input(e) {

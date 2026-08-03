@@ -72,8 +72,9 @@
       </view>
     </view>
 
-    <button class="btn btn-primary btn-block submit-btn" bindtap="submit">生成行程需求单</button>
-    <view class="tip">AI 自动规划将于后续版本上线，当前由专属顾问为您服务</view>
+    <button class="btn btn-ai btn-block submit-btn" bindtap="aiGenerate" loading="{{aiLoading}}">✨ AI 智能生成行程</button>
+    <button class="btn btn-primary btn-block submit-btn" bindtap="submit">生成行程需求单（人工顾问）</button>
+    <view class="tip">AI 方案为预估参考，可立即查看；如需精确报价与预订，仍可由专属顾问 1v1 跟进</view>
   </block>
 
   <view wx:else class="card center done">

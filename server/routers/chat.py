@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import ChatMessage, User
 from utils.wechat import send_custom_message
+from utils.crypto import decrypt_phone
 from routers.auth import get_current_admin
 
 logger = logging.getLogger("lvguanjia.wechat.chat")
@@ -36,6 +37,23 @@ _CALLBACK_TOKEN = os.getenv("WECHAT_CALLBACK_TOKEN", "lvguanjia_callback")
 router = APIRouter(prefix="/api")
 
 
+def _verify_signature(signature: str, timestamp: str, nonce: str) -> bool:
+    """校验微信回调签名：sha1(sorted(token, timestamp, nonce)) == signature。
+
+    明文模式下 GET 验证与 POST 消息推送均在 query 中携带 signature/timestamp/nonce，
+    必须与本地 token 计算结果一致，否则视为伪造请求。
+    """
+    if not signature:
+        return False
+    try:
+        items = sorted([_CALLBACK_TOKEN, timestamp or "", nonce or ""])
+        sha = hashlib.sha1("".join(items).encode("utf-8")).hexdigest()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("微信回调签名计算异常: %s", e)
+        return False
+    return sha == signature
+
+
 # ---------------- 微信回调（无需登录）----------------
 
 @router.get("/wechat/callback")
@@ -45,13 +63,7 @@ def wechat_verify(signature: str = "", timestamp: str = "", nonce: str = "", ech
     明文模式下微信通过此接口验证服务器地址有效性；校验不通过返回 403，
     避免 Token 配置错误被「配置成功」掩盖，便于排查。
     """
-    try:
-        items = sorted([_CALLBACK_TOKEN, timestamp, nonce])
-        sha = hashlib.sha1("".join(items).encode("utf-8")).hexdigest()
-    except Exception as e:  # noqa: BLE001
-        logger.warning("微信回调校验异常: %s", e)
-        sha = ""
-    if sha and sha == signature:
+    if _verify_signature(signature, timestamp, nonce):
         return Response(content=echostr, media_type="text/plain")
     # 校验失败：返回 403，不回显 echostr（微信据此判定配置失败）
     return Response(content="", status_code=status.HTTP_403_FORBIDDEN, media_type="text/plain")
@@ -61,8 +73,14 @@ def wechat_verify(signature: str = "", timestamp: str = "", nonce: str = "", ech
 async def wechat_receive(request: Request, db: Session = Depends(get_db)):
     """接收客户在客服会话中发送的消息（明文 XML），存入 chat_message。
 
-    无论解析成功与否都返回 "success"，否则微信会按重试策略反复推送。
+    安全：先验 query 中的 signature，不匹配直接丢弃（仍回 success 避免微信重试风暴，
+    但不入库），杜绝外部伪造消息灌入后台。
+    解析/入库失败也始终返回 "success"，否则微信会按重试策略反复推送。
     """
+    q = request.query_params
+    if not _verify_signature(q.get("signature", ""), q.get("timestamp", ""), q.get("nonce", "")):
+        logger.warning("微信客服回调签名校验失败，疑似伪造请求，已丢弃")
+        return Response(content="success", media_type="text/plain")
     body = await request.body()
     try:
         root = ET.fromstring(body)
@@ -118,7 +136,7 @@ def chat_sessions(db: Session = Depends(get_db), _admin=Depends(get_current_admi
         result.append({
             "openid": openid,
             "nickname": u.nickname if u else None,
-            "phone": u.phone if u else None,
+            "phone": decrypt_phone(u.phone) if (u and u.phone) else None,
             "last_content": m.content,
             "last_at": m.created_at.isoformat() if m.created_at else None,
             "unread": unread.get(openid, 0),
@@ -153,6 +171,7 @@ def chat_reply(payload: ChatReply, db: Session = Depends(get_db), admin=Depends(
         msg_type="text",
         content=payload.content,
         admin_id=admin.id,
+        is_read=True,  # 出站消息由管理员发出，天然已读
     )
     db.add(msg)
     db.commit()

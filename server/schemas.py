@@ -213,12 +213,23 @@ class CustomerOut(BaseModel):
     total_orders: int
     total_amount: float
     last_contact_at: Optional[datetime] = None
+    is_deleted: bool = False
+    deleted_at: Optional[datetime] = None
+    is_key: bool = False
+    community: Optional[str] = None
 
     @field_validator("phone", mode="before")
     @classmethod
     def _dec_customer_phone(cls, v):
         """DB 中手机号按 enc: 前缀加密存储，读取时解密还原。"""
         return decrypt_phone(v)
+
+    @field_validator("is_deleted", "is_key", mode="before")
+    @classmethod
+    def _coerce_bool(cls, v):
+        """容错：历史行经 ALTER COLUMN 加布尔列后可能为 NULL，
+        Pydantic v2 拒绝 None→bool 会导致列表接口 500。统一将 None/0/1 归约为 bool。"""
+        return bool(v) if v is not None else False
 
 
 class CustomerCreate(BaseModel):
@@ -232,6 +243,8 @@ class CustomerCreate(BaseModel):
     tags: Optional[str] = None
     remark: Optional[str] = None
     follow_status: Optional[str] = "pending_follow"
+    is_key: Optional[bool] = False
+    community: Optional[str] = None
 
 
 class CustomerUpdate(BaseModel):
@@ -245,6 +258,8 @@ class CustomerUpdate(BaseModel):
     tags: Optional[str] = None
     remark: Optional[str] = None
     follow_status: Optional[str] = None
+    is_key: Optional[bool] = None
+    community: Optional[str] = None
 
 
 class CustomerRegister(BaseModel):

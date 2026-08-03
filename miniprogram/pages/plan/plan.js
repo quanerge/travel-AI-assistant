@@ -28,7 +28,8 @@ Page({
     },
     submitted: false,
     submitting: false,
-    submitCount: 0
+    submitCount: 0,
+    aiLoading: false
   },
 
   // 目的地下拉
@@ -117,6 +118,43 @@ Page({
   },
 
   goHome() { wx.switchTab({ url: '/pages/index/index' }) },
+
+  // 第二阶段：AI 行程自动规划。大模型在后端调用，结果写入咨询表，
+  // 小程序跳「我的咨询」查看（复用需求单闭环：行程卡片 + 方案正文 + 未读红点）。
+  aiGenerate() {
+    if (this.data.aiLoading) return
+    const f = this.data.form
+    if (!f.destination) {
+      wx.showToast({ title: '请先选择目的地', icon: 'none' }); return
+    }
+    if (f.interest.length === 0) {
+      wx.showToast({ title: '请至少选择一个兴趣', icon: 'none' }); return
+    }
+    this.setData({ aiLoading: true })
+    wx.showLoading({ title: 'AI 规划中...', mask: true })
+    api.aiPlan({
+      destination: f.destination,
+      days: f.days,
+      people: f.person,
+      budget: f.budget,
+      preferences: f.interest.join('、')
+    }).then((res) => {
+      wx.hideLoading()
+      this.setData({ aiLoading: false })
+      wx.showToast({ title: '已生成，去查看', icon: 'success' })
+      // 跳「我的咨询」查看 AI 方案（复用现有咨询详情渲染行程卡片）
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/mine/mine' })
+        wx.navigateTo({ url: '/pages/myConsult/myConsult' })
+      }, 600)
+    }).catch((err) => {
+      wx.hideLoading()
+      this.setData({ aiLoading: false })
+      console.error('AI 规划失败', err)
+      const msg = (err && err.detail) ? err.detail : (typeof err === 'string' ? err : 'AI 规划失败，请稍后再试')
+      wx.showModal({ title: 'AI 规划失败', content: String(msg), showCancel: false })
+    })
+  },
 
   // 再次提交：保留已填字段，回到表单（便于微调后补交另一份需求）
   submitAgain() {

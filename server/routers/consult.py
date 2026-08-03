@@ -152,9 +152,10 @@ def update_consult(consult_id: int, payload: ConsultUpdate,
         db.commit()
     except Exception:
         # 兜底：运行中的库可能尚未执行 migrate() 补齐 P3 新增列（attachments/itinerary），
-        # 自动补列后重试一次，避免「服务器内部错误」。（先回滚，避免悬挂事务）
+        # 自动补列后重试一次，避免「服务器内部错误」。（先回滚，再 re-add 对象避免丢失改动）
         db.rollback()
         migrate()
+        db.add(rec)
         db.commit()
     db.refresh(rec)
     # 以下为返回体富化（挂线路名/补客户身份/推订阅消息），任一环节异常都不应阻断已保存的方案

@@ -39,6 +39,10 @@ class Customer(Base):
     last_trip = Column(String(64), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_key = Column(Boolean, default=False, nullable=False)          # 重点客户标注（星标）
+    community = Column(String(128), nullable=True)                   # 客户所在小区，用于按小区分组归并
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
 
 
 class Route(Base):

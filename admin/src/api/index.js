@@ -76,6 +76,9 @@ export const api = {
   updateCustomer: (id, data) => http.put(`/customers/${id}`, data),
   getFollowUps: (id) => http.get(`/customers/${id}/follow-ups`),
   addFollowUp: (id, content) => http.post(`/customers/${id}/follow-ups`, { content }),
+  deleteCustomer: (id) => http.post(`/customers/${id}/delete`),
+  restoreCustomer: (id) => http.post(`/customers/${id}/restore`),
+  toggleKeyCustomer: (id) => http.post(`/customers/${id}/toggle-key`),
 
   listConsults: (params) => listRes('/consult', params),
   updateConsult: (id, data) => http.put(`/consult/${id}`, data),
