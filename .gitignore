@@ -25,6 +25,7 @@ server/.backend.log
 
 # ===== Build output (可重建) =====
 admin/dist/
+admin/dist_verify/
 dist/
 
 # ===== Vite cache / temp =====

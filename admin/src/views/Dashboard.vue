@@ -145,7 +145,8 @@ const trend = computed(() => {
 const trendMax = computed(() => Math.max(1, ...trend.value.map(p => p.count)))
 
 const goOrders = () => router.push('/orders')
-const goCustomers = () => router.push('/customers')
+// 点击生日关怀提醒：带 care=birthday 跳转到客户管理，由 CRM 页高亮今天/明天生日的客户
+const goCustomers = () => router.push({ path: '/customers', query: { care: 'birthday' } })
 
 onMounted(async () => {
   try {

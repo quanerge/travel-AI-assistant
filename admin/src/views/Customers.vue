@@ -39,7 +39,13 @@
       </el-tooltip>
     </div>
 
-    <el-table v-if="!groupMode" :data="rows" v-loading="loading" border>
+    <!-- 生日关怀模式提示条：从数据看板跳转进入时显示，可退出 -->
+    <div v-if="birthdayCare" class="birthday-hint">
+      <span>🎂 生日关怀模式：今天 / 明天生日的客户已高亮（当前页 {{ birthdayCount }} 位）。可在分页中翻找高亮行，发送祝福或专属优惠。</span>
+      <el-button link type="warning" size="small" @click="exitBirthdayCare">退出生日关怀</el-button>
+    </div>
+
+    <el-table v-if="!groupMode" :data="rows" v-loading="loading" border :row-class-name="birthdayRowClass">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="重点" width="64" align="center">
         <template #default="{ row }">
@@ -95,7 +101,7 @@
           <span class="group-name">{{ g.name || '未填写小区' }}</span>
           <span class="group-count">{{ g.items.length }} 人</span>
         </div>
-        <el-table :data="g.items" border size="small">
+        <el-table :data="g.items" border size="small" :row-class-name="birthdayRowClass">
           <el-table-column prop="name" label="客户" width="110" />
           <el-table-column label="手机" width="170">
             <template #default="{ row }">
@@ -213,7 +219,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../api'
 import { maskPhone } from '../utils/mask'
@@ -240,6 +247,63 @@ const statusOptions = [
   { value: 'deal', label: '已成交' },
   { value: 'lost', label: '已流失' }
 ]
+
+// ===== 生日关怀高亮：从数据看板「生日关怀提醒」带 ?care=birthday 跳转进入 =====
+const route = useRoute()
+const router = useRouter()
+// 是否处于生日关怀模式（由路由 query 控制）
+const birthdayCare = computed(() => route.query.care === 'birthday')
+
+// 计算今天 / 明天的月-日（MM-DD），用于与生日字段比对
+function mdOf(date) {
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${m}-${d}`
+}
+const todayMD = ref('')
+const tomorrowMD = ref('')
+function refreshMD() {
+  const now = new Date()
+  todayMD.value = mdOf(now)
+  const t2 = new Date(now)
+  t2.setDate(now.getDate() + 1)
+  tomorrowMD.value = mdOf(t2)
+}
+
+// 生日字段存 MM-DD（或 YYYY-MM-DD），统一取末尾月-日比对
+function isBirthdaySoon(row) {
+  if (!row || !row.birthday) return false
+  const b = String(row.birthday).slice(-5)
+  return b === todayMD.value || b === tomorrowMD.value
+}
+
+// 行高亮：仅生日关怀模式下，对今天/明天生日的客户加 birthday-hl
+function birthdayRowClass({ row }) {
+  if (!birthdayCare.value) return ''
+  return isBirthdaySoon(row) ? 'birthday-hl' : ''
+}
+
+// 当前页高亮的生日客户数（用于提示条）
+const birthdayCount = computed(() => rows.value.filter(isBirthdaySoon).length)
+
+// 退出生日关怀：去掉 query 参数并刷新，恢复普通列表
+function exitBirthdayCare() {
+  router.replace({ path: '/customers' })
+}
+
+// 路由参数变化时同步：进入生日模式时回到第 1 页并关闭「仅看重点」，避免误过滤生日客户
+watch(
+  () => route.query.care,
+  (val) => {
+    refreshMD()
+    if (val === 'birthday') {
+      page.value = 1
+      keyOnly.value = false
+    }
+    load()
+  },
+  { immediate: true }
+)
 
 const dialogVisible = ref(false)
 const editingId = ref(null)
@@ -398,7 +462,7 @@ async function restore(row) {
   }
 }
 
-onMounted(load)
+onMounted(() => { refreshMD() })
 </script>
 
 <style scoped>
@@ -435,6 +499,27 @@ onMounted(load)
   color: #606266;
   font-size: 13px;
   line-height: 1.5;
+}
+.birthday-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: #fff7e6;
+  border-left: 4px solid #ffa940;
+  border-radius: 4px;
+  color: #874d00;
+  font-size: 13px;
+  line-height: 1.5;
+}
+/* 生日关怀高亮行：暖金色背景，作用于 el-table 内部 td */
+:deep(tr.birthday-hl > td) {
+  background-color: #fff7e6 !important;
+}
+:deep(tr.birthday-hl.el-table__row:hover > td) {
+  background-color: #fff1d6 !important;
 }
 .community-group {
   margin-bottom: 18px;
