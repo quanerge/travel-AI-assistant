@@ -41,7 +41,12 @@
 
     <!-- 生日关怀模式提示条：从数据看板跳转进入时显示，可退出 -->
     <div v-if="birthdayCare" class="birthday-hint">
-      <span>🎂 生日关怀模式：今天 / 明天生日的客户已高亮（当前页 {{ birthdayCount }} 位）。可在分页中翻找高亮行，发送祝福或专属优惠。</span>
+      <span v-if="birthdayCount">
+        🎂 生日关怀模式：今天 / 明天生日的客户已高亮（当前页 {{ birthdayCount }} 位）。可在分页中翻找高亮行，发送祝福或专属优惠。
+      </span>
+      <span v-else>
+        🎂 生日关怀模式：当前页没有今天 / 明天生日的客户。可翻页查找高亮行；若客户已被删除，请开启「显示已删除」。
+      </span>
       <el-button link type="warning" size="small" @click="exitBirthdayCare">退出生日关怀</el-button>
     </div>
 
@@ -219,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../api'

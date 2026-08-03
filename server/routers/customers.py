@@ -136,7 +136,12 @@ def birthday_reminders(days: int = 1, _admin=Depends(get_current_admin),
         days = 0
     today = datetime.utcnow().date()
     result = []
-    for c in db.query(Customer).filter(Customer.birthday.isnot(None)).all():
+    # 排除已软删除客户（历史数据 is_deleted 可能为 NULL，视为未删除）
+    alive = or_(Customer.is_deleted == False, Customer.is_deleted.is_(None))  # noqa: E712
+    for c in (db.query(Customer)
+                .filter(Customer.birthday.isnot(None))
+                .filter(Customer.birthday != "")
+                .filter(alive).all()):
         off = birthday_match(c.birthday, today, days)
         if off is not None:
             result.append({

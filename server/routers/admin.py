@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from database import get_db, DATABASE_URL
@@ -55,8 +56,16 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
             profit += (revenue - cost)
     profit = round(profit, 2)
 
+    # 未软删除的客户过滤条件（历史数据 is_deleted 可能为 NULL，需一并视为未删除）
+    alive_customer = or_(Customer.is_deleted == False, Customer.is_deleted.is_(None))  # noqa: E712
+
     week_ago = today - timedelta(days=7)
-    customer_growth = db.query(Customer).filter(Customer.created_at >= week_ago).count()
+    customer_growth = (
+        db.query(Customer)
+        .filter(Customer.created_at >= week_ago)
+        .filter(alive_customer)
+        .count()
+    )
 
     top_routes = (
         db.query(Route).filter(Route.status == "active")
@@ -77,8 +86,12 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
     pending_deposit = db.query(Order).filter(Order.status == "pending_deposit").count()
 
     # 生日/纪念日提醒：今天 + 明天过生日的客户（offset 0=今天, 1=明天）
+    # 必须排除已软删除客户，否则点击提醒跳转 CRM 后该客户不在默认列表里，看上去"跳过去什么都没有"
     birthday_reminders = []
-    for c in db.query(Customer).filter(Customer.birthday.isnot(None)).all():
+    for c in (db.query(Customer)
+                .filter(Customer.birthday.isnot(None))
+                .filter(Customer.birthday != "")
+                .filter(alive_customer).all()):
         off = birthday_match(c.birthday, today, 1)
         if off is not None:
             birthday_reminders.append({
