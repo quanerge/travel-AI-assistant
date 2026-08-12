@@ -49,6 +49,12 @@ def migrate():
         ("admin_user", "phone", "VARCHAR(32)"),
         ("order", "is_deleted", "INTEGER"),
         ("order", "deleted_at", "DATETIME"),
+        ("coupon", "title", "VARCHAR(128)"),
+        ("coupon", "applicable", "VARCHAR(64)"),
+        ("order", "coupon_id", "INTEGER"),
+        ("order", "discount_amount", "FLOAT"),
+        ("order", "deposit_amount", "FLOAT"),
+        ("order", "cost_snapshot", "FLOAT"),
         ("customer", "is_key", "INTEGER"),
         ("customer", "community", "VARCHAR(128)"),
         ("customer", "is_deleted", "INTEGER"),
@@ -65,6 +71,18 @@ def migrate():
                 # 列已存在（或表结构已是最新），忽略。
                 # raw_connection 抛的是底层 sqlite3.OperationalError，必须一并捕获。
                 pass
+        conn.commit()
+        # 修复：coupon.code 曾被误设为 UNIQUE（见 models.py），导致用户领取时复制模板 code
+        # 触发唯一约束冲突、领券必失败。仅当 ix_coupon_code 仍为 UNIQUE 时删除该索引，
+        # 避免误删修复后（普通索引）的同名索引。
+        try:
+            row = cur.execute(
+                "SELECT sql FROM sqlite_master WHERE type='index' AND name='ix_coupon_code'"
+            ).fetchone()
+            if row and row[0] and "UNIQUE" in row[0].upper():
+                cur.execute("DROP INDEX ix_coupon_code")
+        except (OperationalError, sqlite3.OperationalError):
+            pass
         conn.commit()
         # 历史行经 ALTER COLUMN 新增布尔列后值为 NULL，统一回填为 0（False），
         # 否则下游 Pydantic 序列化（bool 字段收到 None）会抛 500，导致客户列表整体不可用。

@@ -99,9 +99,12 @@ class Order(Base):
     departure_date = Column(String(32), nullable=True)
     remark = Column(Text, nullable=True)
     status = Column(String(32), default="pending_confirm")
-    deposit_amount = Column(Float, default=0)
     deposit_paid = Column(Boolean, default=False)
     total_amount = Column(Float, nullable=True)
+    coupon_id = Column(Integer, nullable=True)            # 使用的优惠券 id（下单抵扣）
+    discount_amount = Column(Float, default=0)            # 优惠抵扣金额
+    deposit_amount = Column(Float, default=0)             # 预估定金（下单时按线路价比例固化）
+    cost_snapshot = Column(Float, nullable=True)          # 下单时固化的线路成本快照（人×单价），保证利润可回溯
     is_deleted = Column(Boolean, default=False, nullable=False)  # 软删除标记（保留审计与支付记录）
     deleted_at = Column(DateTime, nullable=True)                     # 删除时间
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -145,12 +148,14 @@ class Commission(Base):
 class Coupon(Base):
     __tablename__ = "coupon"
     id = Column(Integer, primary_key=True, index=True)
-    code = Column(String(64), unique=True, index=True)
+    code = Column(String(64), index=True)  # 批次标识：模板与用户券实例共享；绝不能 unique，否则领券复刻 code 必冲突
+    title = Column(String(128), nullable=True)   # 优惠券名称（领取页/后台展示）
     user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
     amount = Column(Float, default=0)
-    condition = Column(String(128), nullable=True)
+    condition = Column(String(128), nullable=True)  # 使用门槛，如"满3000可用"
+    applicable = Column(String(64), default="all", nullable=True)  # all=全场 / route:<id> / category:<cat>
     expire_at = Column(DateTime, nullable=True)
-    status = Column(String(16), default="unused")
+    status = Column(String(16), default="unused")  # 模板: active/inactive；用户券: unused/used/expired
 
 
 class ConsultRecord(Base):
@@ -228,4 +233,28 @@ class ChatMessage(Base):
     content = Column(Text, nullable=True)                     # 文本消息内容
     admin_id = Column(Integer, nullable=True)                 # 回复的管理员 id（仅 out 消息）
     is_read = Column(Boolean, default=False, nullable=False)  # 客户消息是否已读（in 消息用于未读红点）
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AIConversation(Base):
+    """AI 多轮对话会话（小程序 AI 旅行助手）。
+
+    user_id 关联私域客户；admin_id 预留给后台「AI 辅助回复」场景（P1）。
+    """
+    __tablename__ = "ai_conversation"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
+    admin_id = Column(Integer, nullable=True)                 # 预留：后台顾问代聊场景
+    title = Column(String(128), nullable=True)                # 首条消息截断作为标题
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AIMessage(Base):
+    """AI 会话的单条消息（user / assistant）。"""
+    __tablename__ = "ai_message"
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("ai_conversation.id"), nullable=False, index=True)
+    role = Column(String(16), nullable=False)                # user / assistant
+    content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -52,6 +52,9 @@ export const api = {
 
   dashboard: () => http.get('/admin/dashboard'),
 
+  // 收益管理（统一口径：与 Dashboard 累计利润一致，支持时间范围筛选）
+  getRevenue: (params) => http.get('/admin/revenue', { params }),
+
   listRoutes: (params) => listRes('/routes', params),
   getRoute: (id) => http.get(`/routes/${id}`),
   createRoute: (data) => http.post('/routes', data),
@@ -70,6 +73,12 @@ export const api = {
   createBanner: (data) => http.post('/banners/admin', data),
   updateBanner: (id, data) => http.put(`/banners/admin/${id}`, data),
   deleteBanner: (id) => http.delete(`/banners/admin/${id}`),
+
+  // 优惠券（后台管理模板与发放）
+  listCoupons: (params) => listRes('/coupons/admin', params),
+  createCoupon: (data) => http.post('/coupons/admin', data),
+  updateCoupon: (id, data) => http.put(`/coupons/admin/${id}`, data),
+  deleteCoupon: (id) => http.delete(`/coupons/admin/${id}`),
 
   listCustomers: (params) => listRes('/customers', params),
   createCustomer: (data) => http.post('/customers', data),
@@ -96,6 +105,9 @@ export const api = {
 
   // 系统设置
   getSettings: () => http.get('/admin/settings'),
+
+  // AI 智能提取（线路管理「粘贴自动填充」）
+  aiExtract: (text) => http.post('/ai/extract', { text }),
 
   // 用户管理（仅超管）
   listUsers: (params) => listRes('/admin/users', params),

@@ -1,4 +1,10 @@
 <view class="page">
+  <!-- 经营资质提示 -->
+  <view style="background:#FFF7E6;border:1rpx solid #FFD591;border-radius:12rpx;padding:20rpx;margin-bottom:20rpx;">
+    <view style="color:#D46B08;font-weight:600;font-size:28rpx;margin-bottom:8rpx;">⚠️ 经营资质提示</view>
+    <view style="color:#874D00;font-size:22rpx;line-height:1.6;">本小程序由旅游顾问个人运营。微信「旅游/旅行社」类目需《旅行社业务经营许可证》；若您暂无该资质，建议以"个人旅游咨询 / 代销"方式合规运营，并以微信平台规则与当地文旅部门要求为准。</view>
+  </view>
+
   <view class="card about-hero">
     <view class="avatar-lg">旅</view>
     <view class="title">顾问小旅</view>
@@ -14,5 +20,9 @@
     <view class="title" style="margin-bottom:8rpx;">联系顾问</view>
     <view class="sub">微信客服：在「客服中心」发起对话</view>
     <view class="sub">工作时间：9:00 - 21:00</view>
+  </view>
+
+  <view class="card menu">
+    <view class="menu-item" bindtap="goPrivacy">🔒 隐私政策 <text class="sub">></text></view>
   </view>
 </view>

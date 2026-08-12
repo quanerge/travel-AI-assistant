@@ -13,7 +13,10 @@
     "pages/favorites/favorites",
     "pages/about/about",
     "pages/profile/profile",
-    "pages/myConsult/myConsult"
+    "pages/myConsult/myConsult",
+    "pages/coupons/coupons",
+    "pages/privacy/privacy",
+    "pages/ai-chat/ai-chat"
   ],
   "window": {
     "backgroundTextStyle": "light",

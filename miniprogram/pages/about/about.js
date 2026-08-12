@@ -1,2 +1,5 @@
 // pages/about/about.js
-Page({ data: {} })
+Page({
+  data: {},
+  goPrivacy() { wx.navigateTo({ url: '/pages/privacy/privacy' }) }
+})

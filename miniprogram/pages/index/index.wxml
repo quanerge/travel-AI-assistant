@@ -32,7 +32,7 @@
   </view>
   <scroll-view scroll-x class="hot-scroll">
     <view class="route-card" wx:for="{{hotRoutes}}" wx:key="id" bindtap="goRoute" data-id="{{item.id}}">
-      <image class="route-cover" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover}}" binderror="onImgError" data-id="{{item.id}}" />
+      <image class="route-cover-img" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover && !item._imgErr}}" binderror="onImgError" bindload="onImgLoad" data-id="{{item.id}}" />
       <view class="route-cover cover-ph" wx:else>{{item.destination}}</view>
       <view class="route-name">{{item.name}}</view>
       <view class="row between">
@@ -50,6 +50,7 @@
       <view class="quick" bindtap="goRoute" data-id=""><view class="quick-ico">🗺️</view><text>热门路线</text></view>
       <view class="quick" bindtap="goConsult"><view class="quick-ico">✍️</view><text>私人定制</text></view>
       <view class="quick" bindtap="goOrders"><view class="quick-ico">📋</view><text>我的订单</text></view>
+      <view class="quick" bindtap="goAiChat"><view class="quick-ico">🤖</view><text>AI 助手</text></view>
     </view>
   </view>
 </view>

@@ -20,6 +20,33 @@
     <view class="kv"><text class="sub">金额</text><text class="price">¥{{order.total_amount || '--'}}</text></view>
   </view>
 
+  <!-- 线路信息（订单详情默认不含，进入本页时按 route_id 单独拉取）-->
+  <view class="card" wx:if="{{route}}">
+    <view class="row between" style="margin-bottom:12rpx;">
+      <text class="title">线路信息</text>
+      <text class="link" bindtap="goRouteDetail">查看详情 ›</text>
+    </view>
+    <view class="route-name">{{route.name}}</view>
+    <view class="sub" style="margin:6rpx 0 12rpx;">{{route.destination || '目的地待定'}} · {{route.days}}天 · ¥{{route.price}}/人</view>
+    <view class="rich" wx:if="{{route.description}}">{{route.description}}</view>
+    <view class="kv" wx:if="{{route.fee_included}}"><text class="sub">费用包含</text><text class="rich">{{route.fee_included}}</text></view>
+    <view class="kv" wx:if="{{route.fee_excluded}}"><text class="sub">费用不含</text><text class="rich">{{route.fee_excluded}}</text></view>
+    <view class="kv" wx:if="{{route.notice}}"><text class="sub">注意事项</text><text class="rich">{{route.notice}}</text></view>
+    <view class="itinerary" wx:if="{{route.route_days.length}}">
+      <view class="sub" style="margin:12rpx 0 4rpx;">行程安排</view>
+      <view class="day" wx:for="{{route.route_days}}" wx:key="day_no">
+        <text class="day-no">D{{item.day_no}}</text>
+        <view class="day-body">
+          <text class="day-title">{{item.title}}</text>
+          <text class="day-content" wx:if="{{item.content}}">{{item.content}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  <view class="card" wx:elif="{{order.route_id}}">
+    <view class="sub">该订单关联线路（#{{order.route_id}}）的详情暂时无法加载，可联系顾问获取行程说明。</view>
+  </view>
+
   <!-- MVP 线下定金提示 -->
   <view class="card" style="background:#FFF8F0;">
     <view class="title" style="margin-bottom:8rpx;">定金支付（线下）</view>

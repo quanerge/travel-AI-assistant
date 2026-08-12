@@ -17,6 +17,96 @@ from utils.crypto import decrypt_phone
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
+def _parse_dt(s, is_end=False):
+    """将 YYYY-MM-DD 或 ISO 时间字符串解析为 datetime；is_end 时日期默认取到当日 23:59:59.999999。"""
+    if not s:
+        return None
+    s = s.strip()
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        dt = datetime.fromisoformat(s + "T00:00:00")
+    if is_end and len(s) == 10:
+        dt = datetime.fromisoformat(s + "T23:59:59.999999")
+    return dt
+
+
+def _compute_revenue(db: Session, start=None, end=None):
+    """统一收益口径：Dashboard 与「收益管理」共用，确保两页一致。
+
+    规则：
+    - 排除软删除订单
+    - 收入 revenue = total_amount（已含优惠券抵扣）；为 None 时回退 售价×人数
+    - 成本 cost = 下单时快照 cost_snapshot；无快照(历史单)回退 当前线路成本×人数；再无则 0
+    - 利润 = revenue - cost
+    - 已收定金 = 窗口内 deposit_paid 订单的 deposit_amount 之和
+    - start/end 按 created_at 过滤（含端点当日）
+    """
+    q = db.query(Order).filter(or_(Order.is_deleted == False, Order.is_deleted.is_(None)))
+    if start:
+        q = q.filter(Order.created_at >= start)
+    if end:
+        q = q.filter(Order.created_at <= end)
+    orders = q.order_by(Order.id.desc()).all()
+    routes = {r.id: r for r in db.query(Route).all()}
+
+    total_income = 0.0
+    total_profit = 0.0
+    deposit_income = 0.0
+    deposit_paid_orders = 0
+    details = []
+    for o in orders:
+        r = routes.get(o.route_id) if o.route_id else None
+        revenue = o.total_amount if o.total_amount is not None else (r.price * (o.person_count or 1) if r else 0)
+        if o.cost_snapshot is not None:
+            cost = o.cost_snapshot
+            cost_unset = False
+        elif r and r.cost_price:
+            cost = r.cost_price * (o.person_count or 1)
+            cost_unset = False
+        else:
+            cost = 0.0
+            cost_unset = True
+        profit = revenue - cost
+        if o.deposit_paid:
+            deposit_income += (o.deposit_amount or 0)
+            deposit_paid_orders += 1
+        total_income += revenue
+        total_profit += profit
+        details.append({
+            "id": o.id,
+            "order_no": o.order_no,
+            "name": o.name,
+            "route_id": o.route_id,
+            "route_name": r.name if r else None,
+            "person_count": o.person_count,
+            "total_amount": round(revenue, 2),
+            "discount_amount": round(o.discount_amount or 0, 2),
+            "cost": round(cost, 2),
+            "cost_unset": cost_unset,
+            "profit": round(profit, 2),
+            "status": o.status,
+            "deposit_paid": bool(o.deposit_paid),
+            "created_at": o.created_at,
+        })
+    return {
+        "total_income": round(total_income, 2),
+        "total_profit": round(total_profit, 2),
+        "deposit_income": round(deposit_income, 2),
+        "deposit_paid_orders": deposit_paid_orders,
+        "details": details,
+    }
+
+
+@router.get("/revenue")
+def revenue(start: str = None, end: str = None,
+            admin: AdminUser = Depends(get_current_admin), db: Session = Depends(get_db)):
+    """收益管理统一口径（与 Dashboard 累计利润一致）。start/end：YYYY-MM-DD 或 ISO 时间。"""
+    start_dt = _parse_dt(start, is_end=False)
+    end_dt = _parse_dt(end, is_end=True)
+    return _compute_revenue(db, start_dt, end_dt)
+
+
 @router.post("/login", response_model=AdminLoginOut)
 def login(payload: AdminLogin, db: Session = Depends(get_db)):
     admin = db.query(AdminUser).filter(AdminUser.username == payload.username).first()
@@ -46,15 +136,8 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
         if o.created_at and o.created_at.year == today.year and o.created_at.month == today.month
     )
 
-    # 利润 = Σ(收入 - 成本)；收入取 total_amount，无则按 售价×人数 估算
-    profit = 0.0
-    for o in orders:
-        if o.route_id and o.route_id in routes:
-            r = routes[o.route_id]
-            revenue = o.total_amount or (r.price * (o.person_count or 1))
-            cost = (r.cost_price or 0) * (o.person_count or 1)
-            profit += (revenue - cost)
-    profit = round(profit, 2)
+    # 累计利润与「收益管理」页统一口径（含软删除过滤、无线路单、优惠抵0 等）
+    profit = round(_compute_revenue(db)["total_profit"], 2)
 
     # 未软删除的客户过滤条件（历史数据 is_deleted 可能为 NULL，需一并视为未删除）
     alive_customer = or_(Customer.is_deleted == False, Customer.is_deleted.is_(None))  # noqa: E712

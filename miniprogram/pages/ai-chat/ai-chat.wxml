@@ -1,0 +1,42 @@
+<!-- pages/ai-chat/ai-chat.wxml -->
+<view class="page">
+  <!-- 会话切换条 -->
+  <view class="conv-bar">
+    <scroll-view scroll-x class="conv-scroll">
+      <view class="conv-chip {{item.id === currentId ? 'on' : ''}}"
+            wx:for="{{conversations}}" wx:key="id"
+            bindtap="selectConv" data-id="{{item.id}}">
+        {{item.title || '新对话'}}
+      </view>
+    </scroll-view>
+    <view class="conv-new" bindtap="newConv">+ 新对话</view>
+  </view>
+
+  <!-- 消息区 -->
+  <scroll-view scroll-y class="msg-scroll" scroll-into-view="{{scrollAnchor}}" scroll-with-animation>
+    <view wx:if="{{messages.length === 0}}" class="empty">
+      <view class="empty-ico">🤖</view>
+      <view class="empty-tip">嗨，我是旅途管家的 AI 旅行助手</view>
+      <view class="empty-sub">问问线路、行程或预算，我来帮你规划</view>
+    </view>
+    <view wx:for="{{messages}}" wx:key="idx" id="m{{index}}"
+          class="bubble-row {{item.role === 'user' ? 'me' : 'ai'}}">
+      <view class="avatar">{{item.role === 'user' ? '我' : 'AI'}}</view>
+      <view class="bubble">{{item.content}}</view>
+    </view>
+    <view wx:if="{{loading}}" class="bubble-row ai">
+      <view class="avatar">AI</view>
+      <view class="bubble typing">正在思考…</view>
+    </view>
+  </scroll-view>
+
+  <!-- 免责声明 -->
+  <view class="disclaimer">AI 建议仅供参考，不构成承诺价格或服务承诺</view>
+
+  <!-- 输入区 -->
+  <view class="input-bar">
+    <input class="input" value="{{draft}}" bindinput="onInput"
+           placeholder="输入你的问题…" confirm-type="send" bindconfirm="send" />
+    <view class="send-btn {{draft ? '' : 'disabled'}}" bindtap="send">发送</view>
+  </view>
+</view>

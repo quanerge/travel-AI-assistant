@@ -167,9 +167,50 @@ function getFavorites() {
   return Promise.resolve(routes.filter(r => ids.indexOf(r.id) >= 0))
 }
 
+// ---- 优惠券演示数据（最小闭环）----
+const coupons = [
+  { id: 1, code: 'CP2026NEW', title: '新客立减 200', amount: 200, condition: '满3000可用', applicable: 'all', expire_at: '2026-12-31T23:59:59', status: 'active' },
+  { id: 2, code: 'CPSUMMER', title: '夏季专线立减 300', amount: 300, condition: '满5000可用', applicable: 'all', expire_at: '2026-09-30T23:59:59', status: 'active' }
+]
+const myCoupons = []  // 用户已领取的券（演示内存）
+function getCoupons() { return Promise.resolve(coupons.filter(c => c.status === 'active')) }
+function claimCoupon(id) {
+  const t = coupons.find(c => c.id === Number(id))
+  if (!t) return Promise.resolve({ id: 0 })
+  const owned = myCoupons.find(c => c.code === t.code)
+  if (owned) return Promise.resolve(owned)
+  const c = Object.assign({ id: 1000 + myCoupons.length + 1, user_id: 1, status: 'unused' }, t)
+  myCoupons.push(c)
+  return Promise.resolve(c)
+}
+function getMyCoupons() { return Promise.resolve(myCoupons) }
+
+// ---- AI 多轮对话演示（最小闭环，无真实大模型）----
+const aiConversations = []
+const aiMessages = []   // { conversation_id, role, content }
+let aiConvSeq = 1
+function aiChat(payload) {
+  const msg = payload.message || ''
+  let convId = payload.conversation_id
+  if (!convId) {
+    convId = aiConvSeq++
+    aiConversations.push({ id: convId, title: msg.slice(0, 20), created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+  }
+  aiMessages.push({ conversation_id: convId, role: 'user', content: msg })
+  const reply = '【演示模式】关于「' + msg + '」：建议先确认出行人数、天数与预算，再结合现有云南/新疆/川西线路做规划；如需精确报价或签证/机票代订，可转人工顾问。'
+  aiMessages.push({ conversation_id: convId, role: 'assistant', content: reply })
+  return Promise.resolve({ conversation_id: convId, reply, disclaimer: '以上为 AI 建议，仅供参考。' })
+}
+function getAiConversations() { return Promise.resolve(aiConversations) }
+function aiHistory(conversationId) {
+  return Promise.resolve(aiMessages.filter(m => m.conversation_id === Number(conversationId)))
+}
+
 module.exports = {
   getRoutes, getRouteDetail, getBanners, submitSignup, submitPlan,
   getOrders, getOrderDetail, deleteOrder, submitConsult, registerCustomer,
   wxLogin, updateCustomer, toggleFavorite, getFavorites, routes,
-  getMyConsults, getConsultUnread, markConsultRead, toOrder, deleteConsult
+  getMyConsults, getConsultUnread, markConsultRead, toOrder, deleteConsult,
+  getCoupons, claimCoupon, getMyCoupons,
+  aiChat, getAiConversations, aiHistory
 }

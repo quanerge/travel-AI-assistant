@@ -286,7 +286,8 @@ def delete_consult(consult_id: int, db: Session = Depends(get_db),
     try:
         db.commit()
     except Exception:
-        # 兜底：运行中的库可能尚未 migrate() 补齐软删除列，自动补列后重试一次
+        # 兜底：运行中的库可能尚未 migrate() 补齐软删除列，自动补列后重试一次（先回滚，避免悬挂事务）
+        db.rollback()
         migrate()
         db.commit()
     db.refresh(rec)

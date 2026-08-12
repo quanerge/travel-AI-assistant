@@ -1,0 +1,41 @@
+<view class="page">
+  <view class="card">
+    <view class="title">隐私政策</view>
+    <view class="sub">生效日期：2026-08-04</view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:8rpx;">我们收集的信息</view>
+    <view class="sub">1. 账号信息：微信昵称、微信 openid（用于登录与身份识别）。</view>
+    <view class="sub">2. 联系方式：手机号、微信号（用于顾问与您联系、发送行程通知）。</view>
+    <view class="sub">3. 旅行偏好：目的地、预算、兴趣、生日（用于为您推荐线路与生日关怀）。</view>
+    <view class="sub">4. 咨询与订单：您提交的需求、报名信息（用于履约与服务）。</view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:8rpx;">信息如何使用</view>
+    <view class="sub">· 提供线路推荐、行程规划与一对一咨询服务；</view>
+    <view class="sub">· 由顾问与您联系、确认订单与发送服务通知；</view>
+    <view class="sub">· 在您授权的前提下，通过 AI 生成个性化行程方案。</view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:8rpx;">信息存储与安全</view>
+    <view class="sub">手机号等敏感信息采用加密存储；我们采取合理措施保护您的信息不被泄露、篡改或丢失。</view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:8rpx;">您的权利</view>
+    <view class="sub">您可随时在「我的」页编辑或清除个人资料；如需删除账号及全部个人信息，请联系顾问或在客服中心提出，我们将在 15 个工作日内处理。</view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:8rpx;">AI 规划免责声明</view>
+    <view class="sub">AI 生成的行程、费用预估（如交通 / 住宿参考价）仅为建议，不构成承诺价格或最终方案，请以顾问确认的方案与报价为准。</view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:8rpx;">联系我们</view>
+    <view class="sub">如对隐私政策有疑问，请通过「关于顾问」页的客服中心与我们联系。</view>
+  </view>
+</view>

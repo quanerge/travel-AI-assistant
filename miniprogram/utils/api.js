@@ -76,6 +76,26 @@ const api = {
   // 第二阶段：AI 行程自动规划（大模型在后端调用，小程序只传偏好）
   aiPlan(payload) {
     return useMock ? mock.aiPlan(payload) : request('/ai/plan', 'POST', payload)
+  },
+  // 优惠券：领券中心（可领模板）/ 领取 / 我的券
+  getCoupons() {
+    return useMock ? mock.getCoupons() : request('/coupons')
+  },
+  claimCoupon(id) {
+    return useMock ? mock.claimCoupon(id) : request('/coupons/' + id + '/claim', 'POST', {})
+  },
+  getMyCoupons() {
+    return useMock ? mock.getMyCoupons() : request('/coupons/mine')
+  },
+  // AI 多轮对话：发消息 / 会话列表 / 历史
+  aiChat(payload) {
+    return useMock ? mock.aiChat(payload) : request('/ai/chat', 'POST', payload)
+  },
+  aiConversations() {
+    return useMock ? mock.getAiConversations() : request('/ai/conversations')
+  },
+  aiHistory(conversationId) {
+    return useMock ? mock.aiHistory(conversationId) : request('/ai/chat/history?conversation_id=' + conversationId)
   }
 }
 

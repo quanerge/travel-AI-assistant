@@ -12,11 +12,12 @@ function request(path, method = 'GET', data = {}) {
       method,
       data,
       header,
+      timeout: 30000, // 显式超时，避免真机"一直转圈"无反馈（AI 大模型调用可能较慢，后端最多 20s 返回）
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) resolve(res.data)
-        else reject(res.data || { message: '请求失败' })
+        else reject(res.data || { message: 'HTTP ' + res.statusCode })
       },
-      fail: (err) => reject(err)
+      fail: (err) => reject({ message: (err && err.errMsg) ? err.errMsg : '网络请求失败', raw: err })
     })
   })
 }

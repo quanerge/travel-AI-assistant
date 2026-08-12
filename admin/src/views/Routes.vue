@@ -66,6 +66,17 @@
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="formVisible" :title="isEdit ? '编辑线路' : '新增线路'" width="780px" @closed="resetForm">
+      <el-alert type="info" :closable="false" show-icon style="margin-bottom:14px">
+        <template #title>📋 智能粘贴填充</template>
+        <div style="font-size:13px;color:#606266;line-height:1.6">
+          把供应商线路资料 / 行程介绍整段粘贴到下方，点「解析并填充」，系统会自动识别并填入对应项（仅填充当前为空的字段，不覆盖已填内容）。
+        </div>
+        <el-input v-model="pasteText" type="textarea" :rows="3" maxlength="4000"
+          placeholder="在此粘贴线路资料文本，如：线路名称：蓝色土耳其… 目的地：土耳其… 7天… 价格5800…"
+          style="margin:10px 0" />
+        <el-button type="primary" :loading="extracting" @click="runExtract">解析并填充</el-button>
+      </el-alert>
+
       <el-form :model="form" label-width="100px">
         <el-row :gutter="16">
           <el-col :span="12">
@@ -99,6 +110,7 @@
             <el-upload
               action="/api/upload/cover"
               name="file"
+              :headers="uploadHeaders"
               :show-file-list="false"
               accept="image/*"
               :before-upload="beforeCover"
@@ -174,6 +186,70 @@ const uploading = ref(false)
 const editingId = ref(null)
 const form = reactive(emptyForm())
 
+// ---- 智能粘贴填充 ----
+const pasteText = ref('')
+const extracting = ref(false)
+const FIELD_LABELS = {
+  name: '线路名称', category: '分类', departure: '出发地', destination: '目的地',
+  days: '天数', price: '价格', cost_price: '成本价', rating: '评分', group_size: '成团人数',
+  description: '行程亮点', fee_included: '费用包含', fee_excluded: '费用不含', notice: '注意事项'
+}
+
+const runExtract = async () => {
+  const t = (pasteText.value || '').trim()
+  if (!t) { ElMessage.warning('请先粘贴线路资料文本'); return }
+  extracting.value = true
+  try {
+    const data = await api.aiExtract(t)
+    const filled = applyExtract(data)
+    if (data.warning) {
+      ElMessage.warning('已填充（' + filled.join('、') + '），但：' + data.warning)
+    } else if (filled.length) {
+      ElMessage.success('已自动填充：' + filled.join('、'))
+    } else {
+      ElMessage.info('未从文本中识别到可填充字段')
+    }
+  } catch (e) {
+    ElMessage.error('解析失败：' + (e.response?.data?.detail || e.message))
+  } finally {
+    extracting.value = false
+  }
+}
+
+// 把提取结果合并进表单：仅填充当前为空的字段，不覆盖用户已录入内容
+function applyExtract(data) {
+  if (!data || typeof data !== 'object') return []
+  const filled = []
+  const numeric = { days: 1, price: 1, cost_price: 1, rating: 1, group_size: 1 }
+  for (const k of Object.keys(FIELD_LABELS)) {
+    let v = data[k]
+    if (v === undefined || v === null || v === '') continue
+    if (k in numeric) {
+      v = Number(v)
+      if (isNaN(v)) continue
+    }
+    // 已是有效值（非默认空）则跳过，避免覆盖
+    const cur = form[k]
+    const isEmpty = cur === '' || cur === null || cur === undefined ||
+      (k === 'price' && cur === 0) || (k === 'cost_price' && cur === 0) ||
+      (k === 'days' && cur === 1) || (k === 'group_size' && cur === 20) || (k === 'rating' && cur === 5)
+    if (!isEmpty) continue
+    if (k === 'category' && !cats.includes(v)) continue  // 不在下拉选项则跳过
+    form[k] = v
+    filled.push(FIELD_LABELS[k])
+  }
+  // 每日行程：仅当表单为空且有提取结果时填充
+  if (Array.isArray(data.route_days) && data.route_days.length && form.route_days.length === 0) {
+    form.route_days = data.route_days.map((d, i) => ({
+      day_no: Number(d.day_no) || (i + 1),
+      title: d.title || '', content: d.content || '',
+      meals: d.meals || '', accommodation: d.accommodation || '', traffic: d.traffic || ''
+    }))
+    filled.push('每日行程')
+  }
+  return filled
+}
+
 // 上传成功后的预览：相对 /static/... 在 dev 下由 vite 代理到后端；绝对 URL 直连
 const coverPreview = computed(() => {
   const c = form.cover || ''
@@ -185,6 +261,13 @@ const coverPreview = computed(() => {
 const galleryList = computed(() => form.galleryText
   ? form.galleryText.split(/[\n,]/).map(s => s.trim()).filter(Boolean)
   : [])
+
+// 上传鉴权头：el-upload 走原生 XHR，不经过 axios 拦截器，必须手动带 admin token，
+// 否则后端 get_current_admin 返回 401，导致封面上传失败。
+const uploadHeaders = computed(() => {
+  const admin = JSON.parse(localStorage.getItem('admin') || 'null')
+  return admin && admin.token ? { Authorization: 'Bearer ' + admin.token } : {}
+})
 
 const beforeCover = (file) => {
   const okType = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)
@@ -198,9 +281,18 @@ const onCoverOk = (res) => {
   form.cover = res.url
   ElMessage.success('封面上传成功')
 }
-const onCoverErr = () => {
+const onCoverErr = (err) => {
   uploading.value = false
-  ElMessage.error('封面上传失败')
+  let msg = '封面上传失败'
+  try {
+    if (err && err.response) {
+      const r = typeof err.response === 'string' ? JSON.parse(err.response) : err.response
+      if (r && r.detail) { msg += '：' + r.detail }
+    } else if (err && err.status) {
+      msg += '（HTTP ' + err.status + '）'
+    }
+  } catch (e) { /* 忽略解析错误，保持原提示 */ }
+  ElMessage.error(msg)
 }
 
 function emptyForm() {

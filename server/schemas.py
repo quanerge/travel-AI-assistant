@@ -1,6 +1,6 @@
 # server/schemas.py
 import json
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 from typing import Optional, List
 from datetime import datetime
 from utils.crypto import decrypt_phone
@@ -114,6 +114,7 @@ class OrderCreate(BaseModel):
     departure_date: Optional[str] = None
     remark: Optional[str] = None
     user_id: Optional[int] = None
+    coupon_id: Optional[int] = None  # 下单抵扣使用的优惠券 id（服务端校验后计算优惠）
 
 
 class OrderOut(BaseModel):
@@ -130,6 +131,10 @@ class OrderOut(BaseModel):
     status: str
     deposit_paid: bool
     total_amount: Optional[float] = None
+    coupon_id: Optional[int] = None
+    discount_amount: Optional[float] = 0
+    deposit_amount: Optional[float] = 0
+    cost_snapshot: Optional[float] = None
     is_deleted: Optional[bool] = None
     deleted_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
@@ -348,4 +353,65 @@ class FavoriteOut(BaseModel):
     id: int
     user_id: Optional[int] = None
     route_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+
+class CouponOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: Optional[str] = None
+    title: Optional[str] = None
+    user_id: Optional[int] = None
+    amount: float = 0
+    condition: Optional[str] = None
+    applicable: Optional[str] = "all"  # all=全场 / route:<id> / category:<cat>
+    expire_at: Optional[datetime] = None
+    status: str = "unused"
+    created_at: Optional[datetime] = None
+
+
+class CouponCreate(BaseModel):
+    title: str
+    amount: float
+    condition: Optional[str] = None
+    applicable: str = "all"
+    expire_at: Optional[datetime] = None
+    status: str = "active"  # 模板默认启用可领
+
+
+class CouponUpdate(BaseModel):
+    title: Optional[str] = None
+    amount: Optional[float] = None
+    condition: Optional[str] = None
+    applicable: Optional[str] = None
+    expire_at: Optional[datetime] = None
+    status: Optional[str] = None
+
+
+# ---- AI 多轮对话（小程序 AI 旅行助手，P0）----
+class AIChatReq(BaseModel):
+    message: str = Field(..., min_length=1, description="用户本轮消息")
+    conversation_id: Optional[int] = None   # 不传则新建会话
+
+
+class AIChatResp(BaseModel):
+    conversation_id: int
+    reply: str
+    disclaimer: str = "以上为 AI 建议，仅供参考，不构成承诺价格或服务承诺。"
+
+
+class AIConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class AIMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    conversation_id: int
+    role: str
+    content: str
     created_at: Optional[datetime] = None

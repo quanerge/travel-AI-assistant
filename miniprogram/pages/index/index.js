@@ -85,11 +85,25 @@ Page({
     wx.navigateTo({ url: '/pages/consult/consult' })
   },
 
-  // 图片加载失败 → 清空 cover，自动回退到文字占位（mock/后端任意来源通用）
+  goAiChat() {
+    wx.navigateTo({ url: '/pages/ai-chat/ai-chat' })
+  },
+
+  // 图片加载失败 → 仅标记 _imgErr，保留 cover 原值（不永久清空，避免一次瞬态错误就再也看不到图）
   onImgError(e) {
     const id = Number(e.currentTarget.dataset.id)
+    const mark = key => {
+      const arr = this.data[key].map(r => (r.id === id ? Object.assign({}, r, { _imgErr: true }) : r))
+      this.setData({ [key]: arr })
+    }
+    mark('hotRoutes')
+    mark('banners')
+  },
+  // 图片加载成功 → 清除失败标记，确保后续能正常显示
+  onImgLoad(e) {
+    const id = Number(e.currentTarget.dataset.id)
     const clear = key => {
-      const arr = this.data[key].map(r => (r.id === id ? Object.assign({}, r, { cover: '' }) : r))
+      const arr = this.data[key].map(r => (r._imgErr ? Object.assign({}, r, { _imgErr: false }) : r))
       this.setData({ [key]: arr })
     }
     clear('hotRoutes')

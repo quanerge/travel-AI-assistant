@@ -86,12 +86,14 @@
       <el-table-column label="最后联系" width="160">
         <template #default="{ row }">{{ fmt(row.last_contact_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="190" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button link type="success" @click="openFollow(row)">跟进</el-button>
-          <el-button v-if="!row.is_deleted" link type="danger" @click="del(row)">删除</el-button>
-          <el-button v-else link type="warning" @click="restore(row)">恢复</el-button>
+          <div style="white-space: nowrap;">
+            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="success" @click="openFollow(row)">跟进</el-button>
+            <el-button v-if="!row.is_deleted" link type="danger" @click="del(row)">删除</el-button>
+            <el-button v-else link type="warning" @click="restore(row)">恢复</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -123,8 +125,10 @@
           </el-table-column>
           <el-table-column label="操作" width="140" fixed="right">
             <template #default="{ row }">
-              <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-              <el-button link type="success" @click="openFollow(row)">跟进</el-button>
+              <div style="white-space: nowrap;">
+                <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                <el-button link type="success" @click="openFollow(row)">跟进</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>

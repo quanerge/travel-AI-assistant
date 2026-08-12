@@ -4,7 +4,7 @@
 
   <view class="card" wx:for="{{orders}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
     <view class="row between">
-      <text class="title">线路 #{{item.route_id || '定制'}}</text>
+      <text class="title">{{item.route_name ? ('线路 · ' + item.route_name) : ('线路 #' + (item.route_id || '定制'))}}</text>
       <text class="status">{{statusMap[item.status] || item.status}}</text>
     </view>
     <view class="sub" style="margin:8rpx 0;">{{item.name || '行程需求'}} · {{item.person_count}}人 · {{item.departure_date}}</view>

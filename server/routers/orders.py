@@ -1,11 +1,12 @@
 # server/routers/orders.py
 import time
+import re
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from database import get_db, migrate
-from models import Order, Route, Payment
+from models import Order, Route, Payment, Coupon
 from schemas import OrderCreate, OrderOut
 from routers.customers import upsert_customer_from_contact
 from routers.auth import get_current_admin, get_current_user, get_principal
@@ -32,11 +33,48 @@ def create_order(payload: OrderCreate, current_user: User = Depends(get_current_
     """小程序用户下单：身份以 JWT 为准，强制 user_id = 当前用户，杜绝伪造他人订单。"""
     payload.user_id = current_user.id
     order_no = "NO" + str(int(time.time() * 1000))
+    r = None
     total = None
     if payload.route_id:
         r = db.query(Route).filter(Route.id == payload.route_id).first()
         if r:
             total = r.price * payload.person_count
+    # 定金按应收 30% 预估（MVP 固定 30%，后续可在线路/系统配置比例）
+    deposit_amount = round((total or 0) * 0.3, 2)
+    # 成本快照：下单时固化线路成本，保证历史利润可回溯（后续改线路价不影响已下单利润）
+    cost_snapshot = (r.cost_price * payload.person_count) if (r and r.cost_price) else None
+    # ---------- 优惠券抵扣（服务端校验，杜绝伪造优惠）----------
+    coupon = None
+    discount = 0
+    if payload.coupon_id:
+        coupon = db.query(Coupon).filter(
+            Coupon.id == payload.coupon_id,
+            Coupon.user_id == current_user.id,
+            Coupon.status == "unused",
+        ).first()
+        if not coupon:
+            raise HTTPException(400, "优惠券不可用或已被使用")
+        if coupon.expire_at and coupon.expire_at < datetime.utcnow():
+            raise HTTPException(400, "优惠券已过期")
+        if coupon.applicable and coupon.applicable.startswith("route:"):
+            rid = int(coupon.applicable.split(":", 1)[1])
+            if payload.route_id != rid:
+                raise HTTPException(400, "该优惠券仅限指定线路使用")
+        elif coupon.applicable and coupon.applicable.startswith("category:"):
+            need = coupon.applicable.split(":", 1)[1]
+            if payload.route_id:
+                r2 = db.query(Route).filter(Route.id == payload.route_id).first()
+                if not (r2 and r2.category == need):
+                    raise HTTPException(400, "该优惠券不适用此线路分类")
+            else:
+                raise HTTPException(400, "该优惠券需选择对应分类线路")
+        if coupon.condition:
+            m = re.search(r"(\d+(?:\.\d+)?)", coupon.condition)
+            if m and total is not None and total < float(m.group(1)):
+                raise HTTPException(400, "未满足优惠券使用门槛：" + coupon.condition)
+        discount = coupon.amount or 0
+        if total is not None:
+            total = max(0, total - discount)
     order = Order(
         order_no=order_no,
         user_id=payload.user_id,
@@ -47,7 +85,11 @@ def create_order(payload: OrderCreate, current_user: User = Depends(get_current_
         departure_date=payload.departure_date,
         remark=payload.remark,
         status="pending_confirm",
-        total_amount=total
+        total_amount=total,
+        coupon_id=coupon.id if coupon else None,
+        discount_amount=discount,
+        deposit_amount=deposit_amount,
+        cost_snapshot=cost_snapshot,
     )
     db.add(order)
     db.commit()

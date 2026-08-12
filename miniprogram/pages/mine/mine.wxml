@@ -31,6 +31,7 @@
       <text wx:if="{{unreadCount > 0}}" style="background:#f5222d;color:#fff;font-size:20rpx;min-width:28rpx;height:28rpx;border-radius:14rpx;padding:0 6rpx;margin-left:8rpx;text-align:center;line-height:28rpx;">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
       <text class="sub">></text>
     </view>
+    <view class="menu-item" wx:if="{{isLogin}}" bindtap="goCoupons">🎟️ 优惠券 <text class="sub">></text></view>
     <view class="menu-item" bindtap="goConsult">💬 客服中心 <text class="sub">></text></view>
     <view class="menu-item" bindtap="goAbout">ℹ️ 关于顾问 <text class="sub">></text></view>
     <view class="menu-item" wx:if="{{isLogin}}" bindtap="logout">🚪 退出登录 <text class="sub">></text></view>

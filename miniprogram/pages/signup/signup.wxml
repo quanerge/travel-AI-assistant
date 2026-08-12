@@ -31,6 +31,14 @@
       <view class="fld">备注
         <input data-field="remark" value="{{form.remark}}" bindinput="input" placeholder="特殊需求（选填）" />
       </view>
+      <view class="fld">优惠券
+        <view class="picker" bindtap="openCoupons">{{selectedCoupon ? ('¥'+selectedCoupon.amount+' '+selectedCoupon.title) : '未选择（可选）'}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{route}}" class="card center" style="padding:16rpx;">
+      <view class="sub">原价 ¥{{baseAmount}}<text wx:if="{{discount>0}}"> · 优惠 -¥{{discount}}</text></view>
+      <view class="title" style="color:#FF8A3D;margin-top:6rpx;">应付 ¥{{payable}}</view>
     </view>
 
     <button class="btn btn-accent btn-block" bindtap="submit">提交报名</button>
