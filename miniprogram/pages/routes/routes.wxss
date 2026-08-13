@@ -10,11 +10,11 @@
 .search-ico { font-size: 28rpx; margin-right: 12rpx; color: var(--text-sub); }
 .search input { flex: 1; font-size: 28rpx; }
 
-/* 筛选区 */
+/* 筛选区（可折叠） */
 .filters {
   background: #fff;
   border-radius: 16rpx;
-  padding: 4rpx 24rpx 20rpx;
+  padding: 6rpx 24rpx 12rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
@@ -22,18 +22,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18rpx 0 6rpx;
+  padding: 18rpx 0 10rpx;
 }
-.filters-title { font-size: 28rpx; font-weight: 600; color: var(--text); }
-.reset { font-size: 24rpx; color: var(--primary); }
+.fh-left { display: flex; align-items: center; min-width: 0; }
+.filters-title { font-size: 30rpx; font-weight: 700; color: var(--text); margin-right: 16rpx; }
+.filters-sum {
+  font-size: 24rpx; color: var(--primary);
+  max-width: 360rpx; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.fh-right { display: flex; align-items: center; flex-shrink: 0; }
+.reset { font-size: 24rpx; color: var(--primary); margin-right: 16rpx; }
+.chev {
+  font-size: 32rpx; color: var(--text-sub); line-height: 1;
+  transition: transform 0.2s ease; display: inline-block;
+}
+.chev-on { transform: rotate(180deg); }
 .fgroup { padding: 14rpx 0; }
 .flabel { font-size: 24rpx; color: var(--text-sub); margin-bottom: 14rpx; }
 .opts { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .opt {
-  padding: 10rpx 26rpx;
+  padding: 12rpx 28rpx;
   background: #F2F4F8;
   border-radius: 40rpx;
-  font-size: 25rpx;
+  font-size: 26rpx;
   color: var(--text-sub);
 }
 .opt-on { background: var(--primary); color: #fff; }

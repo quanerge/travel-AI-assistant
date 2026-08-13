@@ -51,7 +51,10 @@ Page({
     keyword: '',
     list: [],
     allRoutes: [],           // 原始全量，筛选基于此（避免每次搜索都请求网络）
-    filters: { dayRange: 'all', priceRange: 'all', departure: '不限' }
+    filters: { dayRange: 'all', priceRange: 'all', departure: '不限' },
+    showFilters: false,      // 筛选面板默认收起，节省页面空间
+    filterSummary: '全部',
+    activeCount: 0
   },
 
   onLoad() {
@@ -70,7 +73,7 @@ Page({
 
   // 本地筛选（纯前端，不重发请求）
   applyFilters() {
-    const { allRoutes, activeCat, keyword, filters } = this.data
+    const { allRoutes, activeCat, keyword, filters, dayRanges, priceRanges } = this.data
     const kw = (keyword || '').trim()
     const dTest = dayTest(filters.dayRange)
     const pTest = priceTest(filters.priceRange)
@@ -81,9 +84,30 @@ Page({
     if (filters.departure && filters.departure !== '不限') {
       r = r.filter(x => (x.departure || '') === filters.departure)
     }
+    // 计算已选筛选摘要（用于折叠态单行展示）
+    const parts = []
+    let count = 0
+    if (filters.dayRange !== 'all') {
+      const it = dayRanges.find(d => d.v === filters.dayRange)
+      if (it) { parts.push(it.label); count++ }
+    }
+    if (filters.priceRange !== 'all') {
+      const it = priceRanges.find(d => d.v === filters.priceRange)
+      if (it) { parts.push(it.label); count++ }
+    }
+    if (filters.departure && filters.departure !== '不限') {
+      parts.push(filters.departure); count++
+    }
     this.setData({
-      list: r.map(x => Object.assign({}, x, { cover: resolveCover(x.cover) }))
+      list: r.map(x => Object.assign({}, x, { cover: resolveCover(x.cover) })),
+      filterSummary: parts.length ? parts.join(' · ') : '全部',
+      activeCount: count
     })
+  },
+
+  // 折叠/展开筛选面板
+  toggleFilters() {
+    this.setData({ showFilters: !this.data.showFilters })
   },
 
   onSearch(e) {

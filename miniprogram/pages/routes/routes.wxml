@@ -6,40 +6,48 @@
   </view>
 
   <view class="filters">
-    <view class="filters-head">
-      <text class="filters-title">筛选</text>
-      <text class="reset" bindtap="resetFilters">重置</text>
-    </view>
-
-    <!-- 行程天数：区间单选 -->
-    <view class="fgroup">
-      <view class="flabel">行程天数</view>
-      <view class="opts">
-        <view wx:for="{{dayRanges}}" wx:key="v"
-              class="opt {{filters.dayRange === item.v ? 'opt-on' : ''}}"
-              data-v="{{item.v}}" bindtap="pickDay">{{item.label}}</view>
+    <view class="filters-head" bindtap="toggleFilters">
+      <view class="fh-left">
+        <text class="filters-title">筛选</text>
+        <text class="filters-sum">{{filterSummary}}</text>
+      </view>
+      <view class="fh-right">
+        <text class="reset" wx:if="{{activeCount > 0}}" catchtap="resetFilters">重置</text>
+        <text class="chev {{showFilters ? 'chev-on' : ''}}">⌄</text>
       </view>
     </view>
 
-    <!-- 价格区间：区间单选 -->
-    <view class="fgroup">
-      <view class="flabel">价格区间</view>
-      <view class="opts">
-        <view wx:for="{{priceRanges}}" wx:key="v"
-              class="opt {{filters.priceRange === item.v ? 'opt-on' : ''}}"
-              data-v="{{item.v}}" bindtap="pickPrice">{{item.label}}</view>
+    <block wx:if="{{showFilters}}">
+      <!-- 行程天数：区间单选 -->
+      <view class="fgroup">
+        <view class="flabel">行程天数</view>
+        <view class="opts">
+          <view wx:for="{{dayRanges}}" wx:key="v"
+                class="opt {{filters.dayRange === item.v ? 'opt-on' : ''}}"
+                data-v="{{item.v}}" bindtap="pickDay">{{item.label}}</view>
+        </view>
       </view>
-    </view>
 
-    <!-- 出发地：从数据自动提取，单选 -->
-    <view class="fgroup">
-      <view class="flabel">出发地</view>
-      <view class="opts">
-        <view wx:for="{{departureOptions}}" wx:key="*this"
-              class="opt {{filters.departure === item ? 'opt-on' : ''}}"
-              data-v="{{item}}" bindtap="pickDeparture">{{item}}</view>
+      <!-- 价格区间：区间单选 -->
+      <view class="fgroup">
+        <view class="flabel">价格区间</view>
+        <view class="opts">
+          <view wx:for="{{priceRanges}}" wx:key="v"
+                class="opt {{filters.priceRange === item.v ? 'opt-on' : ''}}"
+                data-v="{{item.v}}" bindtap="pickPrice">{{item.label}}</view>
+        </view>
       </view>
-    </view>
+
+      <!-- 出发地：从数据自动提取，单选 -->
+      <view class="fgroup">
+        <view class="flabel">出发地</view>
+        <view class="opts">
+          <view wx:for="{{departureOptions}}" wx:key="*this"
+                class="opt {{filters.departure === item ? 'opt-on' : ''}}"
+                data-v="{{item}}" bindtap="pickDeparture">{{item}}</view>
+        </view>
+      </view>
+    </block>
   </view>
 
   <scroll-view scroll-x class="cats">
