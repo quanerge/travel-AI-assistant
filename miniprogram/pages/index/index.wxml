@@ -45,11 +45,11 @@
   <!-- 快捷入口 -->
   <view class="card quick-card">
     <view class="row wrap">
-      <view class="quick" bindtap="goPlan"><view class="quick-ico">🧭</view><text>智能规划</text></view>
-      <view class="quick" bindtap="goRoute" data-id=""><view class="quick-ico">🗺️</view><text>热门路线</text></view>
-      <view class="quick" bindtap="goConsult"><view class="quick-ico">✍️</view><text>私人定制</text></view>
-      <view class="quick" bindtap="goOrders"><view class="quick-ico">📋</view><text>我的订单</text></view>
-      <view class="quick" bindtap="goAiChat"><view class="quick-ico">🤖</view><text>AI 助手</text></view>
+      <view class="quick" bindtap="goPlan"><image class="quick-ico" src="/images/quick/plan.png" mode="aspectFit"/><text>智能规划</text></view>
+      <view class="quick" bindtap="goRoute" data-id=""><image class="quick-ico" src="/images/quick/route.png" mode="aspectFit"/><text>热门路线</text></view>
+      <view class="quick" bindtap="goConsult"><image class="quick-ico" src="/images/quick/custom.png" mode="aspectFit"/><text>私人定制</text></view>
+      <view class="quick" bindtap="goOrders"><image class="quick-ico" src="/images/quick/orders.png" mode="aspectFit"/><text>我的订单</text></view>
+      <view class="quick" bindtap="goAiChat"><image class="quick-ico" src="/images/quick/ai.png" mode="aspectFit"/><text>AI 助手</text></view>
     </view>
   </view>
 </view>
