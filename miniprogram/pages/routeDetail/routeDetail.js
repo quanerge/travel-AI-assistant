@@ -8,7 +8,10 @@ Page({
     id: null,
     route: null,
     expandedDay: -1,
-    favorited: false
+    favorited: false,
+    reviews: [],
+    avgRating: 0,
+    reviewCount: 0
   },
 
   onLoad(options) {
@@ -22,6 +25,7 @@ Page({
       this.setData({ route: r })
       wx.setNavigationBarTitle({ title: r.name })
       this.loadFav()
+      this.loadReviews()
     })
   },
 
@@ -32,6 +36,27 @@ Page({
         this.setData({ favorited: list.some(x => x.id === this.data.route.id) })
       }).catch(() => {})
     }
+  },
+
+  loadReviews() {
+    if (!this.data.id) return
+    api.getReviews(this.data.id).then(res => {
+      const list = (res.items || []).slice(0, 3).map(x => Object.assign({}, x, {
+        // 晒图可能是后端相对路径，需补全域名前缀（与封面一致）
+        images: (x.images || []).map(resolveCover)
+      }))
+      this.setData({
+        reviews: list,
+        avgRating: res.avg_rating || 0,
+        reviewCount: res.total || 0
+      })
+    }).catch(() => {})
+  },
+
+  goWriteReview() {
+    const uid = app.globalData.userId
+    if (!uid) { wx.showToast({ title: '请先登录后再评价', icon: 'none' }); return }
+    wx.navigateTo({ url: '/pages/reviewEdit/reviewEdit?routeId=' + this.data.id })
   },
 
   toggleDay(e) {

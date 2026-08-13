@@ -107,6 +107,36 @@ const api = {
       return Promise.resolve({ level: 'normal', level_name: '普通会员', points: 0, total_points: 0, rights: 'AI 行程规划 / 专属顾问咨询', is_member: false })
     }
     return request('/members/me')
+  },
+  // 线路评价晒图（功能①）
+  getReviews(routeId, page = 1) {
+    return useMock ? mock.getReviews(routeId) : request('/reviews?route_id=' + routeId + '&page=' + page)
+  },
+  submitReview(payload) {
+    return useMock ? mock.submitReview(payload) : request('/reviews', 'POST', payload)
+  },
+  getMyReviews() {
+    return useMock ? mock.getMyReviews() : request('/reviews/mine')
+  },
+  // 晒图上传：wx.uploadFile 到用户鉴权端点；mock 模式直接返回占位图
+  uploadReviewImage(filePath) {
+    if (useMock) return Promise.resolve({ url: 'https://picsum.photos/seed/rv' + Date.now() + '/300/300' })
+    return new Promise((resolve, reject) => {
+      const token = wx.getStorageSync('userToken') || ''
+      wx.uploadFile({
+        url: config.baseUrl + '/upload/user-image',
+        filePath,
+        name: 'file',
+        header: token ? { Authorization: 'Bearer ' + token } : {},
+        success: (res) => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            try { resolve(JSON.parse(res.data)) }
+            catch (e) { reject({ message: '上传结果解析失败' }) }
+          } else reject({ message: '上传失败 HTTP ' + res.statusCode })
+        },
+        fail: (err) => reject({ message: (err && err.errMsg) || '上传失败' })
+      })
+    })
   }
 }
 

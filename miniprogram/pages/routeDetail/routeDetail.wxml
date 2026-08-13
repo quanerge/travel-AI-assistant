@@ -68,6 +68,29 @@
       <view class="title" style="margin-bottom:8rpx;">注意事项</view>
       <view class="sub">{{route.notice}}</view>
     </view>
+
+    <!-- 用户评价（功能①评价晒图） -->
+    <view class="card">
+      <view class="row between" style="margin-bottom:12rpx;">
+        <view class="title">用户评价</view>
+        <text class="sub rev-link" bindtap="goWriteReview">{{reviewCount > 0 ? '写评价 ›' : '去评价 ›'}}</text>
+      </view>
+      <view class="row" wx:if="{{reviewCount > 0}}" style="margin-bottom:12rpx;">
+        <text class="rev-stars">★★★★★</text>
+        <text class="sub" style="margin-left:12rpx;">{{avgRating}} 分 · 共 {{reviewCount}} 条</text>
+      </view>
+      <view wx:if="{{reviewCount === 0}}" class="sub" style="padding:8rpx 0;">还没有评价，来做第一个分享的人吧～</view>
+      <view class="rev-item" wx:for="{{reviews}}" wx:key="id">
+        <view class="row between">
+          <text class="rev-name">{{item.nickname}}</text>
+          <text class="rev-stars sm">{{item.rating}} 星</text>
+        </view>
+        <view class="sub" style="margin-top:6rpx;">{{item.content}}</view>
+        <view class="rev-imgs" wx:if="{{item.images.length}}">
+          <image wx:for="{{item.images}}" wx:for-item="img" wx:key="*this" class="rev-img" src="{{img}}" mode="aspectFill"/>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 底部操作栏 -->

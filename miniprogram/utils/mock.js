@@ -206,11 +206,32 @@ function aiHistory(conversationId) {
   return Promise.resolve(aiMessages.filter(m => m.conversation_id === Number(conversationId)))
 }
 
+// ---- 线路评价晒图演示（功能①）----
+const reviews = [
+  { id: 1, user_id: 1, route_id: 1, rating: 5, content: '行程安排很合理，导游专业，爸妈玩得特别开心！', images: ['https://picsum.photos/seed/rv1/300/300'], nickname: '李阿姨', avatar: '', created_at: '2026-07-20 10:00' },
+  { id: 2, user_id: 2, route_id: 1, rating: 4, content: '洱海很美，就是最后一天行程稍微有点赶。', images: ['https://picsum.photos/seed/rv2/300/300', 'https://picsum.photos/seed/rv3/300/300'], nickname: '王先生', avatar: '', created_at: '2026-07-18 15:30' },
+  { id: 3, user_id: 3, route_id: 2, rating: 5, content: '新疆太壮观了，物超所值，下次还来。', images: [], nickname: '赵女士', avatar: '', created_at: '2026-07-10 09:00' }
+]
+function getReviews(routeId) {
+  const list = reviews.filter(r => r.route_id === Number(routeId))
+  const avg = list.length ? list.reduce((s, r) => s + r.rating, 0) / list.length : 0
+  return Promise.resolve({ total: list.length, avg_rating: Math.round(avg * 10) / 10, page: 1, size: 10, items: list })
+}
+function submitReview(payload) {
+  const r = Object.assign({ id: reviews.length + 1, user_id: 1, nickname: '我', avatar: '', status: 'approved', created_at: new Date().toISOString() }, payload)
+  reviews.unshift(r)
+  return Promise.resolve(r)
+}
+function getMyReviews() {
+  return Promise.resolve({ total: 0, page: 1, size: 10, items: [] })
+}
+
 module.exports = {
   getRoutes, getRouteDetail, getBanners, submitSignup, submitPlan,
   getOrders, getOrderDetail, deleteOrder, submitConsult, registerCustomer,
   wxLogin, updateCustomer, toggleFavorite, getFavorites, routes,
   getMyConsults, getConsultUnread, markConsultRead, toOrder, deleteConsult,
   getCoupons, claimCoupon, getMyCoupons,
-  aiChat, getAiConversations, aiHistory
+  aiChat, getAiConversations, aiHistory,
+  getReviews, submitReview, getMyReviews
 }

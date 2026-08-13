@@ -446,3 +446,37 @@ class AIMessageOut(BaseModel):
     role: str
     content: str
     created_at: Optional[datetime] = None
+
+
+class ReviewIn(BaseModel):
+    route_id: int
+    rating: int = 5
+    content: Optional[str] = None
+    images: Optional[List[str]] = None
+
+
+class ReviewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    route_id: int
+    rating: int
+    content: Optional[str] = None
+    images: Optional[List[str]] = None
+    status: str = "approved"
+    nickname: Optional[str] = None   # 评价人昵称（脱敏，不含手机）
+    avatar: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    @field_validator("images", mode="before")
+    @classmethod
+    def _parse_images(cls, v):
+        """DB 中以 JSON 字符串存储，读取时解析为列表。"""
+        if isinstance(v, str):
+            if not v.strip():
+                return []
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return [s.strip() for s in v.split(",") if s.strip()]
+        return v or []

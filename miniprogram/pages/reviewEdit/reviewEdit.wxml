@@ -1,0 +1,30 @@
+<!-- pages/reviewEdit/reviewEdit.wxml —— 写评价（功能①） -->
+<view class="page">
+  <view class="card">
+    <view class="title" style="margin-bottom:16rpx;">线路评分</view>
+    <view class="stars">
+      <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+        class="star {{item <= rating ? 'on' : ''}}"
+        bindtap="setRating" data-v="{{item}}">{{item <= rating ? '★' : '☆'}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title" style="margin-bottom:12rpx;">说说体验</view>
+    <textarea class="ta" placeholder="分享行程体验，帮助更多人做决定（选填）"
+      value="{{content}}" bindinput="onContent" maxlength="500"/>
+  </view>
+
+  <view class="card">
+    <view class="row between" style="margin-bottom:12rpx;">
+      <view class="title">晒图（选填，最多 3 张）</view>
+      <text class="sub">{{images.length}}/3</text>
+    </view>
+    <view class="imgs">
+      <image wx:for="{{images}}" wx:key="*this" class="img" src="{{item}}" mode="aspectFill"/>
+      <view wx:if="{{images.length < 3}}" class="img add" bindtap="chooseImage">＋</view>
+    </view>
+  </view>
+
+  <button class="btn btn-primary btn-block submit" bindtap="submit">提交评价</button>
+</view>

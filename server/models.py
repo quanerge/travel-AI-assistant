@@ -269,3 +269,20 @@ class AIMessage(Base):
     role = Column(String(16), nullable=False)                # user / assistant
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Review(Base):
+    """用户对线路的公开评价（评分 + 文字 + 晒图）。功能①评价晒图。
+
+    不强制绑定订单，先放开 UGC 积累口碑；status 默认 approved 直接展示，
+    pending/rejected 预留后台审核流（第二阶段）。
+    """
+    __tablename__ = "review"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    route_id = Column(Integer, ForeignKey("route.id"), nullable=False, index=True)
+    rating = Column(Integer, default=5)                     # 1-5 星
+    content = Column(Text, nullable=True)                   # 评价文字
+    images = Column(Text, nullable=True)                    # 晒图 URL 列表，JSON 字符串存储
+    status = Column(String(16), default="approved")         # approved / pending / rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
