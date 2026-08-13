@@ -1,6 +1,7 @@
 // pages/signup/signup.js
 const api = require('../../utils/api')
 const app = getApp()
+const { resolveCover } = require('../../utils/cover')
 
 // 后端 expire_at 存的是 UTC 时间(无时区标记),JSON 序列化后前端 new Date() 会按本地时区解析,
 // 中国区会偏差约 8 小时,导致"优惠券是否可用"误判。统一按 UTC 解析保证判断准确。
@@ -25,6 +26,7 @@ Page({
     if (options.routeId) {
       api.getRouteDetail(options.routeId).then(r => {
         if (r) {
+          r.cover = resolveCover(r.cover)
           this.setData({ route: r })
           this._calc()
         }
@@ -104,5 +106,15 @@ Page({
     })
   },
 
-  goOrders() { wx.navigateTo({ url: '/pages/orders/orders' }) }
+  goOrders() { wx.navigateTo({ url: '/pages/orders/orders' }) },
+
+  // 图片加载失败 → 仅标记 _imgErr，保留 cover 原值
+  onImgError() {
+    const r = this.data.route
+    if (r) this.setData({ route: Object.assign({}, r, { _imgErr: true }) })
+  },
+  onImgLoad() {
+    const r = this.data.route
+    if (r && r._imgErr) this.setData({ route: Object.assign({}, r, { _imgErr: false }) })
+  }
 })

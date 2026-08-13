@@ -55,3 +55,5 @@ ppt_assets/
 ppt_product/
 admin/dist_fix/
 admin/dist_fix2/
+# 知识库验证时的临时接口输出（curl 测试产物）
+server/knowledge_out.json

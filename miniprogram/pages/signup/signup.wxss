@@ -1,10 +1,6 @@
 /* pages/signup/signup.wxss */
-.ri-cover {
-  width: 160rpx; height: 120rpx; border-radius: 12rpx; background: #EAF2FF;
-  color: var(--primary); text-align: center;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28rpx;
-}
+/* 报名页顶部线路摘要：全宽杂志大图卡（复用全局 .route-card 系列，覆盖宽度为 100%） */
+.signup-hero { width: 100%; height: 300rpx; }
 .fld {
   display: flex; align-items: center; padding: 24rpx 0;
   border-bottom: 2rpx solid #F0F2F5; font-size: 28rpx;

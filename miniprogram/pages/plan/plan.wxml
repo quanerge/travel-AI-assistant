@@ -81,7 +81,7 @@
     <view style="font-size:64rpx;">✅</view>
     <view class="title" style="margin:16rpx 0;">需求已提交</view>
     <view class="sub">顾问将在 24 小时内通过微信与您联系，请留意消息</view>
-    <view wx:if="{{submitCount > 1}}" class="sub" style="margin-top:8rpx;color:#2B7FFF;">您已累计提交 {{submitCount}} 份需求</view>
+    <view wx:if="{{submitCount > 1}}" class="sub" style="margin-top:8rpx;color:#0E9F6E;">您已累计提交 {{submitCount}} 份需求</view>
     <button class="btn btn-primary btn-block" style="margin-top:32rpx;" bindtap="submitAgain">再提交一份需求</button>
     <button class="btn btn-ghost btn-block" style="margin-top:16rpx;" bindtap="goHome">返回首页</button>
   </view>

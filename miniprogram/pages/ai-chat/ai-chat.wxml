@@ -22,7 +22,25 @@
     <view wx:for="{{messages}}" wx:key="idx" id="m{{index}}"
           class="bubble-row {{item.role === 'user' ? 'me' : 'ai'}}">
       <view class="avatar">{{item.role === 'user' ? '我' : 'AI'}}</view>
-      <view class="bubble">{{item.content}}</view>
+      <view wx:if="{{item.role === 'user'}}" class="bubble">{{item.content}}</view>
+      <view wx:else class="bubble md">
+        <block wx:for="{{item.blocks}}" wx:for-item="b" wx:for-index="bi" wx:key="bi">
+          <view wx:if="{{b.type === 'h1'}}" class="md-h md-h1">{{b.text}}</view>
+          <view wx:elif="{{b.type === 'h2'}}" class="md-h md-h2">{{b.text}}</view>
+          <view wx:elif="{{b.type === 'h3'}}" class="md-h md-h3">{{b.text}}</view>
+          <view wx:elif="{{b.type === 'hr'}}" class="md-hr"></view>
+          <view wx:elif="{{b.type === 'quote'}}" class="md-quote">{{b.text}}</view>
+          <view wx:elif="{{b.type === 'ul'}}" class="md-list">
+            <view wx:for="{{b.items}}" wx:for-item="li" wx:for-index="lii" wx:key="lii" class="md-li"><text class="md-bullet">•</text><text class="md-li-text">{{li}}</text></view>
+          </view>
+          <view wx:elif="{{b.type === 'ol'}}" class="md-list">
+            <view wx:for="{{b.items}}" wx:for-item="li" wx:for-index="lii" wx:key="lii" class="md-li"><text class="md-bullet">{{lii + 1}}.</text><text class="md-li-text">{{li}}</text></view>
+          </view>
+          <view wx:else class="md-p">
+            <text wx:for="{{b.parts}}" wx:for-item="p" wx:for-index="pi" wx:key="pi" class="{{p.bold ? 'md-bold' : ''}} {{p.code ? 'md-code' : ''}}">{{p.text}}</text>
+          </view>
+        </block>
+      </view>
     </view>
     <view wx:if="{{loading}}" class="bubble-row ai">
       <view class="avatar">AI</view>

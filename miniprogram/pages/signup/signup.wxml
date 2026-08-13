@@ -1,10 +1,14 @@
 <!-- pages/signup/signup.wxml -->
 <view class="page">
-  <view wx:if="{{route}}" class="card row">
-    <view class="ri-cover">{{route.destination}}</view>
-    <view style="margin-left:20rpx;">
-      <view class="title">{{route.name}}</view>
-      <view class="sub">{{route.departure}}出发 · {{route.days}}天 · ¥{{route.price}}/人</view>
+  <view wx:if="{{route}}" class="signup-hero route-card">
+    <image class="route-cover-img" src="{{route.cover}}" mode="aspectFill" wx:if="{{route.cover && !route._imgErr}}" binderror="onImgError" bindload="onImgLoad" />
+    <view class="route-ph" wx:else>{{route.destination}}</view>
+    <view class="route-scrim">
+      <view class="route-name">{{route.name}}</view>
+      <view class="route-meta">
+        <text>{{route.departure}}出发 · {{route.days}}天</text>
+        <text class="route-price">¥{{route.price}}</text>
+      </view>
     </view>
   </view>
 
@@ -38,7 +42,7 @@
 
     <view wx:if="{{route}}" class="card center" style="padding:16rpx;">
       <view class="sub">原价 ¥{{baseAmount}}<text wx:if="{{discount>0}}"> · 优惠 -¥{{discount}}</text></view>
-      <view class="title" style="color:#FF8A3D;margin-top:6rpx;">应付 ¥{{payable}}</view>
+      <view class="title" style="color:#E5942B;margin-top:6rpx;">应付 ¥{{payable}}</view>
     </view>
 
     <button class="btn btn-accent btn-block" bindtap="submit">提交报名</button>

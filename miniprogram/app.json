@@ -20,14 +20,14 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#2B7FFF",
+    "navigationBarBackgroundColor": "#0E9F6E",
     "navigationBarTitleText": "旅途管家",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#F5F7FA"
+    "backgroundColor": "#F5F8F4"
   },
   "tabBar": {
     "color": "#6B7280",
-    "selectedColor": "#2B7FFF",
+    "selectedColor": "#0E9F6E",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [

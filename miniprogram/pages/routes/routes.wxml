@@ -51,15 +51,16 @@
 
   <view wx:if="{{list.length === 0}}" class="empty">暂无匹配线路</view>
 
-  <view class="card route-item" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
-    <image class="ri-cover" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover}}" binderror="onImgError" data-id="{{item.id}}" />
-    <view class="ri-cover" wx:else>{{item.destination}}</view>
-    <view class="ri-body">
-      <view class="title">{{item.name}}</view>
-      <view class="sub">{{item.departure}}出发 · {{item.days}}天 · {{item.category}}</view>
-      <view class="row between" style="margin-top:8rpx;">
-        <text class="price">¥{{item.price}}</text>
-        <text class="sub">已报名 {{item.signup_count}} 人</text>
+  <view class="route-grid">
+    <view class="route-card" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+      <image class="route-cover-img" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover && !item._imgErr}}" binderror="onImgError" bindload="onImgLoad" data-id="{{item.id}}" />
+      <view class="route-ph" wx:else>{{item.destination}}</view>
+      <view class="route-scrim">
+        <view class="route-name">{{item.name}}</view>
+        <view class="route-meta">
+          <text>{{item.destination}} · {{item.days}}天</text>
+          <text class="route-price">¥{{item.price}}</text>
+        </view>
       </view>
     </view>
   </view>

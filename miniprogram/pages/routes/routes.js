@@ -118,9 +118,16 @@ Page({
     wx.navigateTo({ url: '/pages/routeDetail/routeDetail?id=' + e.currentTarget.dataset.id })
   },
 
+  // 图片加载失败 → 仅标记 _imgErr，保留 cover 原值（与首页一致）
   onImgError(e) {
     const id = Number(e.currentTarget.dataset.id)
-    const list = this.data.list.map(r => (r.id === id ? Object.assign({}, r, { cover: '' }) : r))
+    const list = this.data.list.map(r => (r.id === id ? Object.assign({}, r, { _imgErr: true }) : r))
+    this.setData({ list })
+  },
+  // 图片加载成功 → 清除失败标记
+  onImgLoad(e) {
+    const id = Number(e.currentTarget.dataset.id)
+    const list = this.data.list.map(r => (r._imgErr ? Object.assign({}, r, { _imgErr: false }) : r))
     this.setData({ list })
   }
 })

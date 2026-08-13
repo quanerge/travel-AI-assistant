@@ -1,1 +1,1 @@
-/* 复用全局 route-item / card 样式 */
+/* 收藏列表复用全局杂志大图卡（app.wxss 中 .route-grid / .route-card 等） */

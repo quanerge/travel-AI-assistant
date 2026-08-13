@@ -2,7 +2,7 @@
 
 /* 顶部主视觉 */
 .hero {
-  background: linear-gradient(135deg, #2B7FFF, #5AA0FF);
+  background: linear-gradient(135deg, #0E9F6E, #4FC08D);
   border-radius: 20rpx;
   padding: 40rpx 32rpx;
   margin-bottom: 24rpx;

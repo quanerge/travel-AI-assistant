@@ -1,12 +1,12 @@
 /* app.wxss —— 设计系统（对应页面设计文档 V1.1 §2） */
 page {
-  --primary: #2B7FFF;
-  --accent: #FF8A3D;
+  --primary: #0E9F6E;
+  --accent: #E5942B;
   --success: #2BBF6A;
   --danger: #FF4D4F;
   --text: #1A1A1A;
   --text-sub: #6B7280;
-  --bg: #F5F7FA;
+  --bg: #F5F8F4;
   --card: #FFFFFF;
   background: var(--bg);
   color: var(--text);
@@ -49,9 +49,9 @@ page {
 /* 标签 */
 .tag {
   display: inline-block; padding: 4rpx 16rpx; border-radius: 8rpx;
-  font-size: 22rpx; margin-right: 12rpx; background: #EAF2FF; color: var(--primary);
+  font-size: 22rpx; margin-right: 12rpx; background: #E7F6EF; color: var(--primary);
 }
-.tag-accent { background: #FFF1E6; color: var(--accent); }
+.tag-accent { background: #FBF0E0; color: var(--accent); }
 .tag-success { background: #E7F8EE; color: var(--success); }
 .tag-danger { background: #FFECEC; color: var(--danger); }
 
@@ -71,3 +71,37 @@ page {
 
 /* 骨架/空态 */
 .empty { text-align: center; color: var(--text-sub); padding: 80rpx 0; }
+
+/* 杂志风大图卡（首页 / 线路列表共用，方向A） */
+.route-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
+.route-card {
+  position: relative; width: 48.5%; height: 300rpx;
+  border-radius: 20rpx; overflow: hidden; margin-bottom: 18rpx;
+  background: #0E9F6E;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.10);
+}
+.route-cover-img { width: 100%; height: 300rpx; display: block; }
+.route-ph {
+  width: 100%; height: 300rpx;
+  background: linear-gradient(135deg, #0E9F6E, #4FC08D);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 34rpx; font-weight: 700;
+}
+.route-scrim {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 26rpx 22rpx 20rpx;
+  background: linear-gradient(to top, rgba(0,0,0,0.66), rgba(0,0,0,0));
+  color: #fff;
+}
+.route-name {
+  font-size: 30rpx; font-weight: 700; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 2rpx 6rpx rgba(0,0,0,0.35);
+}
+.route-meta { margin-top: 10rpx; display: flex; align-items: center; justify-content: space-between; }
+.route-meta text:first-child { font-size: 22rpx; opacity: 0.9; }
+.route-price {
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 24rpx;
+  padding: 4rpx 16rpx; border-radius: 999rpx;
+  box-shadow: 0 4rpx 12rpx rgba(229,148,43,0.4);
+}

@@ -1,7 +1,7 @@
 /* pages/routeDetail/routeDetail.wxss */
 .gallery { height: 420rpx; }
 .gallery-item {
-  height: 420rpx; background: linear-gradient(135deg, #5AA0FF, #2B7FFF);
+  height: 420rpx; background: linear-gradient(135deg, #4FC08D, #0E9F6E);
   color: #fff; text-align: center;
   display: flex; align-items: center; justify-content: center;
   font-size: 40rpx;

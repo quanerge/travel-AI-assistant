@@ -17,6 +17,7 @@ from models import ConsultRecord, Route, User, AdminUser, AIConversation, AIMess
 from typing import Optional
 from routers.auth import get_current_user, get_current_admin
 from utils.llm import chat_completion, ping, _api_key
+from utils.knowledge import retrieve as retrieve_knowledge, list_knowledge
 from schemas import AIChatReq, AIChatResp, AIConversationOut, AIMessageOut
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -77,11 +78,17 @@ def ai_plan(req: AIPlanReq, user: User = Depends(get_current_user), db: Session 
         for r in routes
     ) or "（暂无完全匹配的现成线路，请基于通用旅行知识规划）"
 
+    # 文件型旅游知识库作为通用常识补充（目的地/偏好相关的景点、美食、注意事项等）
+    kb_items = retrieve_knowledge(req.destination + " " + req.preferences)
+    kb_ctx = "\n\n".join(
+        f"【{it['title']}】\n{it['body'][:600]}" for it in kb_items
+    ) or "（知识库暂无相关内容）"
+
     user_msg = (
         f"请为以下需求规划行程：\n"
         f"目的地：{req.destination}\n天数：{req.days}\n人数：{req.people}\n"
         f"预算：{req.budget or '不限'}\n出发地：{req.departure or '未定'}\n偏好：{req.preferences or '无特殊'}\n\n"
-        f"可参考的现有线路库：\n{route_ctx}"
+        f"可参考的现有线路库：\n{route_ctx}\n\n旅游知识库参考：\n{kb_ctx}"
     )
 
     try:
@@ -137,6 +144,8 @@ CHAT_SYSTEM_PROMPT = """你是「旅途管家」的 AI 旅游助手，服务于�
 用专业、亲切、可信的中文口吻回答客户的旅行问题：线路推荐、行程建议、出行注意事项、费用预估等。
 可基于客户的提问灵活应答，必要时引导其咨询真人顾问。
 费用与时间均为预估，措辞需体现「仅供参考」；不要编造具体航班号、酒店预订或无法核实的报价。
+
+回答请用清晰的结构化 Markdown 格式，方便手机端阅读：用「# 」标题分段、用「- 」列表罗列要点、用 **加粗** 标出关键信息与价格；避免一整段长文字堆砌。
 """
 
 
@@ -150,6 +159,12 @@ def ai_ping():
     """
     ok, err = ping()
     return {"llm_configured": bool(_api_key()), "reachable": ok, "error": err}
+
+
+@router.get("/knowledge")
+def knowledge_list(user: User = Depends(get_current_user)):
+    """列出旅游知识库条目（标题/类别/标签/字数），供调试与后台查看。"""
+    return list_knowledge()
 
 
 @router.post("/chat", response_model=AIChatResp)
@@ -185,8 +200,16 @@ def ai_chat(req: AIChatReq, user: User = Depends(get_current_user), db: Session 
         for r in routes
     ) or "（暂无完全匹配的现成线路）"
 
+    # 3.1) 文件型旅游知识库检索（景点/美食/签证/出行准备等通用知识）
+    kb_items = retrieve_knowledge(req.message)
+    kb_ctx = "\n\n".join(
+        f"【{it['title']}】\n{it['body'][:900]}" for it in kb_items
+    ) or "（知识库暂无相关内容）"
+
     messages = [
-        {"role": "system", "content": CHAT_SYSTEM_PROMPT + "\n\n可参考的现有线路库：\n" + route_ctx},
+        {"role": "system", "content": CHAT_SYSTEM_PROMPT
+         + "\n\n可参考的现有线路库：\n" + route_ctx
+         + "\n\n旅游知识库参考：\n" + kb_ctx},
     ]
     for m in history:
         messages.append({"role": m.role, "content": m.content})

@@ -1,14 +1,14 @@
 .page { padding: 24rpx; }
 .tabs { display: flex; background: #fff; border-radius: 12rpx; overflow: hidden; margin-bottom: 24rpx; }
 .tab { flex: 1; text-align: center; padding: 24rpx 0; font-size: 28rpx; color: #6B7280; }
-.tab--on { color: #2B7FFF; font-weight: 600; background: #EAF2FF; }
+.tab--on { color: #0E9F6E; font-weight: 600; background: #E7F6EF; }
 
 .cp-card { display: flex; align-items: center; background: #fff; border-radius: 12rpx; padding: 24rpx; margin-bottom: 20rpx; }
-.cp-amt { width: 150rpx; text-align: center; font-size: 44rpx; font-weight: 700; color: #FF8A3D; }
+.cp-amt { width: 150rpx; text-align: center; font-size: 44rpx; font-weight: 700; color: #E5942B; }
 .cp-info { flex: 1; padding: 0 16rpx; }
 .cp-title { font-size: 30rpx; font-weight: 600; color: #1f2937; }
 .cp-sub { font-size: 22rpx; color: #9ca3af; margin-top: 6rpx; }
-.cp-btn { background: #2B7FFF; color: #fff; border-radius: 24rpx; font-size: 24rpx; }
+.cp-btn { background: #0E9F6E; color: #fff; border-radius: 24rpx; font-size: 24rpx; }
 .cp-tag { font-size: 22rpx; color: #9ca3af; }
 .cp-card--used, .cp-card--expired { opacity: 0.55; }
 .empty { text-align: center; color: #9ca3af; padding: 80rpx 0; font-size: 26rpx; }

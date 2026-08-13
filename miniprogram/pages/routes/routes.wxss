@@ -46,11 +46,4 @@
 }
 .cat-on { background: var(--primary); color: #fff; }
 
-/* 线路卡片 */
-.route-item { display: flex; }
-.ri-cover {
-  width: 200rpx; height: 160rpx; border-radius: 12rpx; background: #EAF2FF;
-  color: var(--primary); text-align: center; font-size: 30rpx; margin-right: 20rpx;
-  display: flex; align-items: center; justify-content: center;
-}
-.ri-body { flex: 1; display: flex; flex-direction: column; }
+/* 线路卡片已改为全局杂志大图卡（app.wxss 中 .route-card 等） */

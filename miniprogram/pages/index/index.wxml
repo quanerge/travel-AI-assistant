@@ -1,7 +1,7 @@
-<!-- pages/index/index.wxml -->
+<!-- pages/index/index.wxml —— 方向A 沉浸杂志风 -->
 <view class="page">
-  <!-- 顾问真人形象卡 -->
-  <view class="card row" bindtap="goConsult">
+  <!-- 顾问真人形象卡（轻量保留） -->
+  <view class="card row advisor" bindtap="goConsult">
     <view class="avatar">{{advisor.name[0]}}</view>
     <view class="col" style="margin-left:20rpx;">
       <view class="title">嗨，我是{{advisor.name}}</view>
@@ -10,41 +10,40 @@
     <view class="tag tag-accent" style="margin-left:auto;">咨询</view>
   </view>
 
-  <!-- Banner 轮播 -->
-  <swiper class="banner" indicator-dots autoplay circular interval="3500">
+  <!-- Hero 大图轮播（沉浸） -->
+  <swiper class="hero" indicator-dots indicator-active-color="#ffffff" autoplay circular interval="4000">
     <swiper-item wx:for="{{banners}}" wx:key="id" bindtap="goRoute" data-id="{{item.id}}">
-      <image class="banner-img" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover}}" binderror="onImgError" data-id="{{item.id}}" />
-      <view class="banner-item" wx:else>
-        <view class="banner-title">{{item.name}}</view>
-        <view class="banner-sub">{{item.destination}} · {{item.days}}天 · ¥{{item.price}}</view>
-      </view>
-      <view class="banner-mask" wx:if="{{item.cover}}">
-        <view class="banner-title">{{item.name}}</view>
-        <view class="banner-sub">{{item.destination}} · {{item.days}}天 · ¥{{item.price}}</view>
+      <image class="hero-img" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover && !item._imgErr}}" binderror="onImgError" bindload="onImgLoad" data-id="{{item.id}}" />
+      <view class="hero-ph" wx:else></view>
+      <view class="hero-scrim">
+        <view class="hero-kicker">编辑精选 · EDITOR'S PICK</view>
+        <view class="hero-title">{{item.name}}</view>
+        <view class="hero-sub">{{item.destination}} · {{item.days}}天 · ¥{{item.price}}起</view>
       </view>
     </swiper-item>
   </swiper>
 
-  <!-- 热门推荐 -->
-  <view class="row between" style="margin:24rpx 0 12rpx;">
-    <view class="title">热门推荐</view>
-    <view class="sub" bindtap="goRoute" data-id="">更多 ></view>
+  <!-- 热门路线（杂志大图卡 2 列） -->
+  <view class="row between sec-head">
+    <view class="sec-title">热门路线</view>
+    <view class="sub" bindtap="goRoute" data-id="">查看全部 ></view>
   </view>
-  <scroll-view scroll-x class="hot-scroll">
+  <view class="route-grid">
     <view class="route-card" wx:for="{{hotRoutes}}" wx:key="id" bindtap="goRoute" data-id="{{item.id}}">
       <image class="route-cover-img" src="{{item.cover}}" mode="aspectFill" wx:if="{{item.cover && !item._imgErr}}" binderror="onImgError" bindload="onImgLoad" data-id="{{item.id}}" />
-      <view class="route-cover cover-ph" wx:else>{{item.destination}}</view>
-      <view class="route-name">{{item.name}}</view>
-      <view class="row between">
-        <text class="price-sm">¥{{item.price}}</text>
-        <text class="sub">{{item.days}}天</text>
+      <view class="route-ph" wx:else>{{item.destination}}</view>
+      <view class="route-scrim">
+        <view class="route-name">{{item.name}}</view>
+        <view class="route-meta">
+          <text>{{item.destination}} · {{item.days}}天</text>
+          <text class="route-price">¥{{item.price}}</text>
+        </view>
       </view>
-      <view class="sub">已报名 {{item.signup_count}} 人</view>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 快捷入口 -->
-  <view class="card">
+  <view class="card quick-card">
     <view class="row wrap">
       <view class="quick" bindtap="goPlan"><view class="quick-ico">🧭</view><text>智能规划</text></view>
       <view class="quick" bindtap="goRoute" data-id=""><view class="quick-ico">🗺️</view><text>热门路线</text></view>

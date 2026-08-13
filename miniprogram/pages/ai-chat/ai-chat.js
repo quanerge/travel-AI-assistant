@@ -1,10 +1,11 @@
 // pages/ai-chat/ai-chat.js
 const api = require('../../utils/api')
+const md = require('../../utils/markdown')
 
 Page({
   data: {
     messages: [],        // { role: 'user'|'assistant', content }
-    conversations: [],   // 会话列表（含 id/title）
+    conversations: [],   // 会话列表（含 id/title�?
     currentId: null,     // 当前会话 id（null = 新对话）
     draft: '',
     loading: false,
@@ -15,7 +16,7 @@ Page({
     this.loadConversations()
   },
 
-  // 拉取会话列表，若有历史则自动进入最近一次
+  // 拉取会话列表，若有历史则自动进入最近一�?
   loadConversations() {
     api.aiConversations().then(list => {
       const conversations = list || []
@@ -26,12 +27,16 @@ Page({
     }).catch(() => {})
   },
 
-  // 选中历史会话 → 回放消息
+  // 选中历史会话 �? 回放消息
   selectConv(e) {
     const id = Number(e.currentTarget.dataset.id)
     this.setData({ currentId: id, messages: [], loading: true })
     api.aiHistory(id).then(list => {
-      const messages = (list || []).map(m => ({ role: m.role, content: m.content }))
+      const messages = (list || []).map(m => {
+        const o = { role: m.role, content: m.content }
+        if (m.role === 'assistant') o.blocks = md.parseBlocks(m.content)
+        return o
+      })
       this.setData({ messages, loading: false })
       this.scrollBottom(messages.length)
     }).catch(() => {
@@ -39,7 +44,7 @@ Page({
     })
   },
 
-  // 开新对话：清空当前会话与消息
+  // 开新对话：清空当前会话与消�?
   newConv() {
     this.setData({ currentId: null, messages: [], draft: '' })
   },
@@ -60,7 +65,8 @@ Page({
 
     api.aiChat({ message: text, conversation_id: sendingId })
       .then(res => {
-        const reply = { role: 'assistant', content: res.reply }
+        const replyContent = res.reply || ''
+        const reply = { role: 'assistant', content: replyContent, blocks: md.parseBlocks(replyContent) }
         const next = this.data.messages.concat(reply)
         this.setData({
           messages: next,
@@ -68,13 +74,13 @@ Page({
           currentId: res.conversation_id || sendingId
         })
         this.scrollBottom(next.length)
-        // 刷新会话列表（标题/排序可能变化）
+        // 刷新会话列表（标�?/排序可能变化�?
         this.loadConversations()
       })
       .catch(err => {
         this.setData({ loading: false })
         const detail = (err && err.detail) ? String(err.detail) : (err && err.message) ? err.message : 'AI 回复失败'
-        console.error('[AI chat] 失败：', err)
+        console.error('[AI chat] 失败�?', err)
         wx.showToast({
           title: detail.slice(0, 40),
           icon: 'none'

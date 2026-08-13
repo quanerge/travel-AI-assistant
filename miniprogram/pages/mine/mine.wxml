@@ -37,7 +37,7 @@
     <view class="menu-item" wx:if="{{isLogin}}" bindtap="logout">🚪 退出登录 <text class="sub">></text></view>
   </view>
 
-  <view class="card" style="background:#EAF2FF;">
+  <view class="card" style="background:#E7F6EF;">
     <view class="title" style="color:var(--primary);">会员即将上线</view>
     <view class="sub">VIP 99/年 · 高级 299/年，享不限 AI 规划、人工咨询免费等权益</view>
   </view>
