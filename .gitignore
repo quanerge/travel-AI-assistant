@@ -46,6 +46,7 @@ Thumbs.db
 # ===== 用户上传的静态资源（封面图/附件，运行时生成，勿提交到 git） =====
 server/static/covers/**
 server/static/attachments/**
+server/static/reviews/**
 # 保留目录结构占位（清空时 git 仍能跟踪目录）
 !server/static/.gitkeep
 
