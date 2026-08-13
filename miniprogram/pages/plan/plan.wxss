@@ -62,6 +62,34 @@
   font-size: 30rpx;
   color: var(--text);
 }
+
+/* 目的地：自由输入 + 热门标签 */
+.field-divider { border-bottom: 2rpx solid #F0F2F5; padding-bottom: 30rpx; }
+.dest-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 18rpx;
+  padding: 22rpx 24rpx;
+  background: #F2F4F8;
+  border-radius: 14rpx;
+  font-size: 30rpx;
+  color: var(--text);
+  text-align: left;
+}
+.dest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+.dest-chip {
+  padding: 14rpx 28rpx;
+  background: #F2F4F8;
+  border-radius: 48rpx;
+  font-size: 26rpx;
+  color: var(--text-sub);
+}
+.dest-chip-on { background: var(--primary); color: #fff; }
 .picker-val .chev {
   color: #C0C4CC;
   font-size: 28rpx;

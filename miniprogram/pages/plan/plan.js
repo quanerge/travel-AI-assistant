@@ -1,21 +1,21 @@
 // pages/plan/plan.js —— 智能行程规划/线路设计（MVP：需求提交，由顾问人工回执）
 const api = require('../../utils/api')
 
-// 目的地：下拉单选（默认空，需选择）
-const destinations = ['云南', '新疆', '西藏', '四川', '海南', '境外']
+// 目的地：自由输入 + 热门快捷标签（覆盖国内省份/城市与主流出境方向，可填任意目的地）
+const destChips = ['云南', '新疆', '西藏', '四川', '海南', '北京', '西安', '贵州', '广西', '福建', '内蒙古', '港澳台', '日本', '东南亚', '欧洲', '澳洲']
 // 预算：下拉单选（可不选，默认"不限"）
 const budgetOptions = ['不限', '3000以内', '3000-6000', '6000-10000', '10000以上']
 const interests = ['自然', '美食', '摄影', '亲子', '人文', '自驾']
 
 Page({
   data: {
-    destinations, budgetOptions,
+    budgetOptions,
+    destChips,
     interestList: interests.map(n => ({ name: n, on: false })),
     // 步进器边界
     minDays: 1, maxDays: 30,
     minPerson: 1, maxPerson: 20,
     // picker 选中索引
-    destIndex: 0,
     budgetIndex: 0,
     form: {
       destination: '',   // 空 = 未选，提交时需校验
@@ -32,10 +32,14 @@ Page({
     aiLoading: false
   },
 
-  // 目的地下拉
-  onDest(e) {
-    const i = Number(e.detail.value)
-    this.setData({ destIndex: i, 'form.destination': this.data.destinations[i] })
+  // 目的地：自由输入（可填任意目的地）
+  onDestInput(e) {
+    this.setData({ 'form.destination': e.detail.value.trim() })
+  },
+  // 目的地：点选热门标签（再次点击同一项则清空，便于改为手输）
+  pickDestChip(e) {
+    const v = e.currentTarget.dataset.v
+    this.setData({ 'form.destination': this.data.form.destination === v ? '' : v })
   },
 
   // 预算下拉
