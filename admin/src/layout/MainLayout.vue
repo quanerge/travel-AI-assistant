@@ -18,6 +18,7 @@
         <el-menu-item index="/banners"><el-icon><Picture /></el-icon>Banner 管理</el-menu-item>
         <el-menu-item index="/coupons"><el-icon><Discount /></el-icon>优惠券</el-menu-item>
         <el-menu-item index="/consults"><el-icon><ChatDotRound /></el-icon>智能需求单</el-menu-item>
+        <el-menu-item index="/reviews"><el-icon><Star /></el-icon>评价管理</el-menu-item>
         <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon>客服消息</el-menu-item>
         <el-menu-item v-if="isSuper" index="/users"><el-icon><UserFilled /></el-icon>用户管理</el-menu-item>
         <el-menu-item index="/settings"><el-icon><Setting /></el-icon>系统设置</el-menu-item>
@@ -50,7 +51,7 @@ import { auth } from '../store/auth'
 import { api } from '../api'
 import {
   DataLine, MapLocation, Tickets, User, Money, ChatDotRound, Picture,
-  UserFilled, Setting, ChatLineRound, Discount
+  UserFilled, Setting, ChatLineRound, Discount, Star
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

@@ -94,6 +94,10 @@ export const api = {
   deleteConsult: (id) => http.post(`/consult/${id}/delete`),
   getMe: () => http.get('/auth/me'),
 
+  // 评价管理（功能①收尾：全站查看 / 审核 / 下架 / 删除）
+  listReviewsAdmin: (params) => listRes('/reviews/admin', params),
+  updateReviewStatus: (id, status) => http.post(`/reviews/${id}/status`, { status }),
+
   // 后端应用版本（公开接口，无需登录；用于管理后台左侧版本号展示）
   getVersion: () => http.get('/version'),
 
