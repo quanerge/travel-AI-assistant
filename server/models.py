@@ -136,6 +136,10 @@ class Member(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     level = Column(String(16), default="normal")  # normal / vip / premium
+    level_name = Column(String(32), nullable=True)  # 等级展示名（如 VIP会员/高级会员）
+    points = Column(Integer, default=0)            # 积分余额
+    total_points = Column(Integer, default=0)      # 累计积分
+    rights = Column(Text, nullable=True)           # 权益说明（逗号分隔文本）
     expire_at = Column(DateTime, nullable=True)
     status = Column(String(16), default="active")
     created_at = Column(DateTime, default=datetime.utcnow)

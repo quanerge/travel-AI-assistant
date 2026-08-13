@@ -100,6 +100,13 @@ const api = {
   // 顾问联系方式（公开接口；mock 模式回退 config.js 兜底值）
   getAdvisor() {
     return useMock ? Promise.resolve(config.advisor) : request('/config/advisor')
+  },
+  // 会员信息（功能4：激活 member 表）；mock 模式返回普通会员默认值
+  getMember() {
+    if (useMock) {
+      return Promise.resolve({ level: 'normal', level_name: '普通会员', points: 0, total_points: 0, rights: 'AI 行程规划 / 专属顾问咨询', is_member: false })
+    }
+    return request('/members/me')
   }
 }
 

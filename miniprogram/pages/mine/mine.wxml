@@ -4,7 +4,7 @@
     <view class="avatar">{{userInfo ? userInfo.nickName[0] : '游'}}</view>
     <view style="margin-left:20rpx;">
       <view class="title">{{userInfo ? userInfo.nickName : '游客'}}</view>
-      <view class="sub">{{isLogin ? (userInfo.phone || '普通用户') : '普通用户（会员即将上线）'}}</view>
+      <view class="sub">{{isLogin ? ((userInfo.phone || '普通用户') + (member ? ' · ' + member.level_name : '')) : '游客'}}</view>
     </view>
   </view>
 
@@ -34,8 +34,16 @@
     <view class="menu-item" wx:if="{{isLogin}}" bindtap="logout"><image class="menu-ico" src="/images/mine/logout.png" mode="aspectFit"/><text class="menu-label">退出登录</text><text class="sub">></text></view>
   </view>
 
-  <view class="card" style="background:#E7F6EF;">
-    <view class="title" style="color:var(--primary);">会员即将上线</view>
-    <view class="sub">VIP 99/年 · 高级 299/年，享不限 AI 规划、人工咨询免费等权益</view>
+  <!-- 会员卡片（激活 member 表，功能4） -->
+  <view class="card member-card" wx:if="{{member}}">
+    <view class="row between">
+      <view class="member-level">
+        <text class="member-badge">{{member.level_name || '普通会员'}}</text>
+        <text class="member-points">积分 {{member.points}}</text>
+      </view>
+      <text class="member-more" bindtap="goMember">会员权益 ›</text>
+    </view>
+    <view class="member-rights">{{member.rights}}</view>
+    <view class="member-expire" wx:if="{{member.expire_at}}">有效期至 {{member.expire_at}}</view>
   </view>
 </view>

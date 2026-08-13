@@ -6,7 +6,7 @@ Page({
   data: {
     userInfo: null, isLogin: false,
     birthday: '', birthdayTip: '', birthdaySoon: false,
-    unreadCount: 0
+    unreadCount: 0, member: null
   },
 
   onShow() {
@@ -27,8 +27,10 @@ Page({
     // 拉取未读咨询数（顾问已回复但未查看），用于红点提示
     if (app.globalData.isLogin) {
       api.getConsultUnread().then(r => this.setData({ unreadCount: (r && r.count) || 0 })).catch(() => {})
+      // 拉取会员信息（功能4：激活 member 表）
+      api.getMember().then(m => this.setData({ member: m })).catch(() => {})
     } else {
-      this.setData({ unreadCount: 0 })
+      this.setData({ unreadCount: 0, member: null })
     }
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 3 })
@@ -58,6 +60,9 @@ Page({
   goAbout() { wx.navigateTo({ url: '/pages/about/about' }) },
   goCoupons() { wx.navigateTo({ url: '/pages/coupons/coupons' }) },
   goMyConsult() { wx.navigateTo({ url: '/pages/myConsult/myConsult' }) },
+  goMember() {
+    wx.showToast({ title: '会员升级请联系顾问', icon: 'none' })
+  },
 
   logout() {
     wx.showModal({

@@ -66,6 +66,11 @@ def migrate():
         ("route", "daily_walk", "INTEGER"),
         ("route", "suitable_age_min", "INTEGER"),
         ("route", "suitable_age_max", "INTEGER"),
+        # 功能4：会员体系
+        ("member", "level_name", "VARCHAR(32)"),
+        ("member", "points", "INTEGER"),
+        ("member", "total_points", "INTEGER"),
+        ("member", "rights", "TEXT"),
     ]
     conn = engine.raw_connection()
     try:

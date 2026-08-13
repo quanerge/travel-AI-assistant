@@ -36,5 +36,17 @@
 .birthday-card--soon .birthday-title { color: #D6336C; }
 .birthday-sub { font-size: 24rpx; color: #9A6A4B; margin-top: 6rpx; }
 
+/* 会员卡片（功能4：激活 member 表） */
+.member-card {
+  background: linear-gradient(135deg, #0E9F6E, #4FC08D); color: #fff;
+  display: block;
+}
+.member-level { display: flex; align-items: baseline; }
+.member-badge { font-size: 32rpx; font-weight: 700; }
+.member-points { font-size: 24rpx; margin-left: 16rpx; opacity: 0.92; }
+.member-more { font-size: 24rpx; opacity: 0.92; }
+.member-rights { font-size: 24rpx; margin-top: 14rpx; opacity: 0.92; line-height: 1.5; }
+.member-expire { font-size: 22rpx; margin-top: 8rpx; opacity: 0.85; }
+
 /* 自定义 tabBar 固定定位，预留底部安全留白，避免内容被遮挡 */
 page { padding-bottom: calc(150rpx + env(safe-area-inset-bottom)); }

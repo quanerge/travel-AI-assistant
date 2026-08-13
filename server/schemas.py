@@ -124,6 +124,19 @@ class RouteOut(BaseModel):
         return v
 
 
+class MemberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: Optional[int] = None
+    level: str = "normal"
+    level_name: Optional[str] = None
+    points: int = 0
+    total_points: int = 0
+    rights: Optional[str] = None
+    expire_at: Optional[datetime] = None
+    status: str = "active"
+    is_member: bool = False
+
+
 class OrderCreate(BaseModel):
     route_id: Optional[int] = None
     name: str
