@@ -1,7 +1,8 @@
 # server/seed.py —— 初始化演示数据（线路 + 管理员）
 from database import SessionLocal, engine, Base, migrate
 import models
-from models import Route, RouteDay, AdminUser, Banner
+from datetime import datetime, timedelta
+from models import Route, RouteDay, AdminUser, Banner, Coupon
 import bcrypt
 
 
@@ -103,6 +104,22 @@ def seed():
             Banner(image="https://picsum.photos/seed/chuanxi/600/300", title="川西自驾7日", route_id=3, sort=3),
         ])
         print("已写入 3 条 Banner。")
+
+    # 优惠券演示模板：仅当无任何可领模板时才插入，避免重复堆券
+    if db.query(Coupon).filter(Coupon.user_id.is_(None), Coupon.status == "active").count() == 0:
+        _exp = datetime.utcnow() + timedelta(days=30)
+        _exp_past = datetime.utcnow() - timedelta(days=1)
+        db.add_all([
+            Coupon(code="SEED_NO200", title="新人立减 ¥50", user_id=None, amount=50,
+                   condition=None, applicable="all", expire_at=_exp, status="active"),
+            Coupon(code="SEED_3000", title="满 3000 减 300", user_id=None, amount=300,
+                   condition="满3000可用", applicable="all", expire_at=_exp, status="active"),
+            Coupon(code="SEED_5000", title="满 5000 减 600", user_id=None, amount=600,
+                   condition="满5000可用", applicable="all", expire_at=_exp, status="active"),
+            Coupon(code="SEED_EXP", title="（演示）已过期券", user_id=None, amount=100,
+                   condition=None, applicable="all", expire_at=_exp_past, status="active"),
+        ])
+        print("已写入 4 条优惠券模板（含 1 条过期演示）。")
 
     db.commit()
     db.close()

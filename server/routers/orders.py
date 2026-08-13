@@ -122,6 +122,11 @@ def create_order(payload: OrderCreate, current_user: User = Depends(get_current_
     db.add(order)
     db.commit()
     db.refresh(order)
+    # 核销优惠券：下单成功后立即把所选券翻为 used，防止重复使用（先落库再归集客户，
+    # 即便后续客户归集异常，订单与券核销已生效）
+    if coupon:
+        coupon.status = "used"
+        db.commit()
     # 归集客户：报名即客户，累加订单数与消费
     upsert_customer_from_contact(
         db, name=payload.name, phone=payload.phone,
