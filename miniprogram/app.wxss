@@ -47,7 +47,7 @@ page {
 .btn::after { border: none; }
 /* AI 智能生成行程：渐变绿主按钮 + 图标/加载态 */
 .btn-ai { background: linear-gradient(135deg, #0E9F6E, #4FC08D); color: #fff; }
-.btn-ico { width: 40rpx; height: 40rpx; margin-right: 12rpx; }
+.btn-ico { width: 36rpx; height: 36rpx; margin-right: 10rpx; }
 .btn-txt { white-space: nowrap; }
 .btn-spin {
   width: 34rpx; height: 34rpx; margin-right: 12rpx;

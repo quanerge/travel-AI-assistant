@@ -77,7 +77,9 @@
       <image wx:else class="btn-ico" src="/images/quick/ai.png" mode="aspectFit" />
       <text class="btn-txt">{{aiLoading ? 'AI 生成中…' : 'AI 智能生成行程'}}</text>
     </view>
-    <button class="btn btn-ghost btn-block submit-btn" bindtap="submit">生成行程需求单（人工顾问）</button>
+    <view class="btn btn-ghost btn-block submit-btn" bindtap="submit">
+      <text class="btn-txt">生成行程需求单（人工顾问）</text>
+    </view>
     <view class="tip">AI 方案为预估参考，可立即查看；如需精确报价与预订，仍可由专属顾问 1v1 跟进</view>
   </block>
 
