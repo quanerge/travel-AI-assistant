@@ -6,9 +6,9 @@
   </view>
 
   <view class="card about-hero">
-    <view class="avatar-lg">旅</view>
-    <view class="title">顾问小旅</view>
-    <view class="sub">专注云南 / 新疆深度游 8 年</view>
+    <view class="avatar-lg">{{advisor.name[0] || '顾'}}</view>
+    <view class="title">顾问 {{advisor.name}}</view>
+    <view class="sub">{{advisor.intro}}</view>
   </view>
 
   <view class="card">
@@ -19,7 +19,12 @@
   <view class="card">
     <view class="title" style="margin-bottom:8rpx;">联系顾问</view>
     <view class="sub">微信客服：在「客服中心」发起对话</view>
-    <view class="sub">工作时间：9:00 - 21:00</view>
+    <view class="sub" wx:if="{{advisor.worktime}}">工作时间：{{advisor.worktime}}</view>
+    <view class="row" style="gap:16rpx;margin-top:16rpx;">
+      <button class="btn btn-primary" style="flex:1;margin:0;" bindtap="callAdvisor">一键拨打</button>
+      <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="copyWechat">复制微信</button>
+    </view>
+    <view class="sub" wx:if="{{advisor.wechat}}" style="margin-top:12rpx;">微信号：{{advisor.wechat}}</view>
   </view>
 
   <view class="card menu">

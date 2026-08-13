@@ -1,10 +1,21 @@
 <!-- pages/consult/consult.wxml -->
 <view class="page">
-  <!-- 入口 -->
-  <view class="card row">
-    <button class="btn btn-primary" style="flex:1;margin-right:16rpx;" open-type="contact">微信客服</button>
-    <button class="btn btn-ghost" style="flex:1;" bindtap="callPhone">电话咨询</button>
+  <!-- 真人顾问信息（来自后端 /api/config/advisor，可配置） -->
+  <view class="card advisor-card">
+    <view class="adv-avatar">{{advisor.name[0] || '顾'}}</view>
+    <view class="col" style="flex:1;margin-left:20rpx;min-width:0;">
+      <view class="title">顾问 {{advisor.name}}</view>
+      <view class="sub" style="margin:6rpx 0;">{{advisor.intro}}</view>
+      <view class="sub" wx:if="{{advisor.worktime}}">工作时间：{{advisor.worktime}}</view>
+    </view>
   </view>
+
+  <!-- 入口 -->
+  <view class="row" style="gap:16rpx;margin-bottom:16rpx;">
+    <button class="btn btn-primary" style="flex:1;margin:0;" open-type="contact">微信客服</button>
+    <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="callPhone">电话咨询</button>
+  </view>
+  <button class="btn btn-ghost btn-block" bindtap="copyWechat" style="margin-bottom:16rpx;">复制顾问微信</button>
 
   <!-- 在线留言 -->
   <view class="card">

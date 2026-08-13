@@ -16,6 +16,16 @@ module.exports = {
   // 微信订阅消息模板 ID（P2 推送用）：在微信公众平台「订阅消息」申请模板，字段需含
   // 事项(thing1)、处理人(name2)、时间(time3)。留空则提交时不请求授权、也不推送。
   subscribeTemplateId: '',
+  // 顾问联系方式（前端兜底；若后端 /api/config/advisor 已配置则以其为准，启动时自动拉取）
+  // ⚠️ 把下面的值替换成你的真实顾问信息（phone 必须是纯数字，wx.makePhoneCall 才能拨通）
+  advisor: {
+    name: '小旅顾问',
+    phone: '',            // 真实手机号，如 '13800000000'
+    wechat: '',           // 真实微信号
+    avatar: '',
+    intro: '资深旅游顾问，提供一对一行程规划与报名服务',
+    worktime: '9:00 - 21:00'
+  },
   // 订单状态字典（与后端、需求文档 7.5 一致）
   orderStatusMap: {
     pending_confirm: '待确认',

@@ -1,14 +1,16 @@
 // pages/orderDetail/orderDetail.js
 const api = require('../../utils/api')
 const config = require('../../utils/config')
+const advisorUtil = require('../../utils/advisor')
 
 // 与需求 7.5 一致的步骤
 const steps = ['pending_confirm', 'confirmed', 'pending_deposit', 'deposit_received', 'success', 'completed']
 
 Page({
-  data: { order: null, route: null, statusMap: config.orderStatusMap, steps, stepIndex: 0 },
+  data: { order: null, route: null, advisor: {}, statusMap: config.orderStatusMap, steps, stepIndex: 0 },
 
   onLoad(options) {
+    this.setData({ advisor: advisorUtil.getAdvisor() })
     api.getOrderDetail(options.id).then(o => {
       if (!o) { wx.showToast({ title: '订单不存在', icon: 'none' }); return }
       this.setData({ order: o, stepIndex: Math.max(0, steps.indexOf(o.status)) })
@@ -28,6 +30,10 @@ Page({
   },
 
   callAdvisor() {
-    wx.makePhoneCall({ phoneNumber: '4000000000' })
+    advisorUtil.callAdvisor()
+  },
+
+  copyWechat() {
+    advisorUtil.copyWechat()
   }
 })

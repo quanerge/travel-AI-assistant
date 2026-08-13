@@ -1,6 +1,7 @@
 // pages/index/index.js
 const api = require('../../utils/api')
 const { resolveCover } = require('../../utils/cover')
+const advisorUtil = require('../../utils/advisor')
 
 // 后端 cover 为空时，按目的地兜底到本地示例图（仅本机调试用，正式环境应以 CDN 链接为准）
 const DEST_COVER = [
@@ -25,16 +26,18 @@ function withFallbackCover(list) {
 
 Page({
   data: {
-    advisor: {
-      name: '顾问小旅',
-      intro: '专注云南 / 新疆深度游 8 年',
-      avatar: ''
-    },
+    advisor: {},
     banners: [],
     hotRoutes: []
   },
 
+  // 顾问信息来自后端 /api/config/advisor（兜底 config.js），避免写死占位号
+  loadAdvisor() {
+    this.setData({ advisor: advisorUtil.getAdvisor() })
+  },
+
   onLoad() {
+    this.loadAdvisor()
     api.getRoutes().then(list => {
       const fixed = withFallbackCover(list)
       this.setData({ hotRoutes: fixed, _routes: list })
@@ -114,6 +117,7 @@ Page({
     clear('banners')
   },
   onShow() {
+    this.loadAdvisor()
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }

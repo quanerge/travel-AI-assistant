@@ -1,6 +1,7 @@
 // pages/consult/consult.js
 const api = require('../../utils/api')
 const config = require('../../utils/config')
+const advisorUtil = require('../../utils/advisor')
 
 const faqs = [
   { q: '多少钱？', a: '线路价格见详情页，含/不含项已明确标注。' },
@@ -10,10 +11,16 @@ const faqs = [
 ]
 
 Page({
-  data: { faqs, open: -1, form: { name: '', phone: '', content: '' }, routeId: null },
+  data: { faqs, open: -1, advisor: {}, form: { name: '', phone: '', content: '' }, routeId: null },
 
   onLoad(options) {
     if (options.routeId) this.setData({ routeId: options.routeId })
+    this.setData({ advisor: advisorUtil.getAdvisor() })
+  },
+
+  // 顾问信息可能在启动后异步拉取到位，显示时刷新一次
+  onShow() {
+    this.setData({ advisor: advisorUtil.getAdvisor() })
   },
 
   toggle(e) {
@@ -49,5 +56,7 @@ Page({
     })
   },
 
-  callPhone() { wx.makePhoneCall({ phoneNumber: '4000000000' }) }
+  callPhone() { advisorUtil.callAdvisor() },
+
+  copyWechat() { advisorUtil.copyWechat() }
 })

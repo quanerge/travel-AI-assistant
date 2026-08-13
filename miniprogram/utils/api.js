@@ -96,6 +96,10 @@ const api = {
   },
   aiHistory(conversationId) {
     return useMock ? mock.aiHistory(conversationId) : request('/ai/chat/history?conversation_id=' + conversationId)
+  },
+  // 顾问联系方式（公开接口；mock 模式回退 config.js 兜底值）
+  getAdvisor() {
+    return useMock ? Promise.resolve(config.advisor) : request('/config/advisor')
   }
 }
 

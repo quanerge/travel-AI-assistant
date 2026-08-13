@@ -51,7 +51,11 @@
   <view class="card" style="background:#FFF8F0;">
     <view class="title" style="margin-bottom:8rpx;">定金支付（线下）</view>
     <view class="sub">当前版本暂不支持在线支付。请按顾问指引通过微信转账支付定金，顾问确认收款后订单推进。</view>
-    <button class="btn btn-ghost btn-block" style="margin-top:20rpx;" bindtap="callAdvisor">联系顾问</button>
+    <view class="sub" style="margin-top:8rpx;" wx:if="{{advisor.name}}">专属顾问：{{advisor.name}}（工作时间 {{advisor.worktime}}）</view>
+    <view class="row" style="gap:16rpx;margin-top:20rpx;">
+      <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="callAdvisor">电话联系</button>
+      <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="copyWechat">复制微信</button>
+    </view>
   </view>
 </view>
 <view wx:else class="empty">加载中…</view>

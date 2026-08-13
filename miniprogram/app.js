@@ -1,11 +1,13 @@
 // app.js
+const config = require('./utils/config')
 App({
   globalData: {
     userInfo: null,
     openid: null,
     userId: null,
     userToken: null,
-    isLogin: false
+    isLogin: false,
+    advisor: null   // 启动后由 /api/config/advisor 拉取，覆盖 config.js 兜底值
   },
 
   onLaunch() {
@@ -21,6 +23,11 @@ App({
     if (token) this.globalData.userToken = token
     // 微信静默登录：拿 code 换 openid，打通后端用户（MVP 兜底实现）
     this.wxLoginSilent()
+    // 拉取顾问联系方式（一键拨号 / 复制微信用），失败则保留 config.js 兜底值
+    const api = require('./utils/api')
+    api.getAdvisor().then(a => {
+      if (a) this.globalData.advisor = Object.assign({}, config.advisor, a)
+    }).catch(() => {})
   },
 
   // 静默登录：wx.login 取 code -> 后端 /api/auth/wx-login -> 存 openid/userId/token
