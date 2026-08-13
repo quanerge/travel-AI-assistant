@@ -51,8 +51,8 @@ Page({
   // 最少天数步进
   stepDays(e) {
     const d = Number(e.currentTarget.dataset.d)
-    const { days, minDays, maxDays } = this.data
-    const next = days + d
+    const { form, minDays, maxDays } = this.data
+    const next = form.days + d
     if (next < minDays || next > maxDays) return
     this.setData({ 'form.days': next })
   },
@@ -60,8 +60,8 @@ Page({
   // 出行人数步进
   stepPerson(e) {
     const d = Number(e.currentTarget.dataset.d)
-    const { person, minPerson, maxPerson } = this.data
-    const next = person + d
+    const { form, minPerson, maxPerson } = this.data
+    const next = form.person + d
     if (next < minPerson || next > maxPerson) return
     this.setData({ 'form.person': next })
   },
