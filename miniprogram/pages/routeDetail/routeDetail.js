@@ -29,6 +29,11 @@ Page({
     })
   },
 
+  onShow() {
+    // 从写评价/分享等页面返回时，重载评价区（刚提交的评价即时可见）
+    if (this.data.id) this.loadReviews()
+  },
+
   loadFav() {
     const uid = app.globalData.userId
     if (uid && this.data.route) {

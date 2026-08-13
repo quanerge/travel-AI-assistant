@@ -1,13 +1,15 @@
 // pages/reviewEdit/reviewEdit.js —— 写评价（功能①评价晒图）
 const api = require('../../utils/api')
 const app = getApp()
+const { resolveCover } = require('../../utils/cover')
 
 Page({
   data: {
     routeId: null,
     rating: 5,
     content: '',
-    images: []
+    images: [],     // 提交给后端的相对路径（/static/reviews/...）
+    previews: []    // 编辑器内预览用的完整地址（已补 baseUrl 前缀）
   },
 
   onLoad(options) {
@@ -40,7 +42,11 @@ Page({
           .then(results => {
             wx.hideLoading()
             const urls = results.map(r => r.url)
-            this.setData({ images: this.data.images.concat(urls) })
+            const previews = results.map(r => resolveCover(r.url))
+            this.setData({
+              images: this.data.images.concat(urls),
+              previews: this.data.previews.concat(previews)
+            })
           })
           .catch(() => {
             wx.hideLoading()
