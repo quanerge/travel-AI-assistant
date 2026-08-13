@@ -70,6 +70,8 @@
   box-sizing: border-box;
   margin-top: 18rpx;
   padding: 22rpx 24rpx;
+  min-height: 92rpx;
+  line-height: 46rpx;
   background: #F2F4F8;
   border-radius: 14rpx;
   font-size: 30rpx;

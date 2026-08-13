@@ -72,7 +72,11 @@
       </view>
     </view>
 
-    <button class="btn btn-ai btn-block submit-btn" bindtap="aiGenerate" loading="{{aiLoading}}">✨ AI 智能生成行程</button>
+    <view class="btn btn-ai btn-block submit-btn" bindtap="aiGenerate">
+      <view wx:if="{{aiLoading}}" class="btn-spin"></view>
+      <image wx:else class="btn-ico" src="/images/quick/ai.png" mode="aspectFit" />
+      <text class="btn-txt">{{aiLoading ? 'AI 生成中…' : 'AI 智能生成行程'}}</text>
+    </view>
     <button class="btn btn-primary btn-block submit-btn" bindtap="submit">生成行程需求单（人工顾问）</button>
     <view class="tip">AI 方案为预估参考，可立即查看；如需精确报价与预订，仍可由专属顾问 1v1 跟进</view>
   </block>
