@@ -30,6 +30,9 @@ Page({
     } else {
       this.setData({ unreadCount: 0 })
     }
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 3 })
+    }
   },
 
   // 计算生日相对今天的偏移：0=今天, 1=明天, -1=非临近

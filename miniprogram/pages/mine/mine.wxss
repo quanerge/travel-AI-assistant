@@ -33,3 +33,6 @@
 .birthday-title { font-size: 32rpx; font-weight: 700; color: #C2410C; }
 .birthday-card--soon .birthday-title { color: #D6336C; }
 .birthday-sub { font-size: 24rpx; color: #9A6A4B; margin-top: 6rpx; }
+
+/* 自定义 tabBar 固定定位，预留底部安全留白，避免内容被遮挡 */
+page { padding-bottom: calc(150rpx + env(safe-area-inset-bottom)); }

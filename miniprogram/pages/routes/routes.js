@@ -129,5 +129,10 @@ Page({
     const id = Number(e.currentTarget.dataset.id)
     const list = this.data.list.map(r => (r._imgErr ? Object.assign({}, r, { _imgErr: false }) : r))
     this.setData({ list })
+  },
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 1 })
+    }
   }
 })

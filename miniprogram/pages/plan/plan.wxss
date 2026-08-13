@@ -120,3 +120,6 @@
 }
 
 .done { margin-top: 40rpx; }
+
+/* 自定义 tabBar 固定定位，预留底部安全留白，避免内容被遮挡 */
+page { padding-bottom: calc(150rpx + env(safe-area-inset-bottom)); }

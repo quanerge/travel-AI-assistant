@@ -159,5 +159,10 @@ Page({
   // 再次提交：保留已填字段，回到表单（便于微调后补交另一份需求）
   submitAgain() {
     this.setData({ submitted: false, submitting: false })
+  },
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 2 })
+    }
   }
 })
