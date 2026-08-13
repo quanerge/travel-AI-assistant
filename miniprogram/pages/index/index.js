@@ -8,6 +8,7 @@ const DEST_COVER = [
   { keyword: '新疆', cover: '/images/xinjiang.jpg' },
   { keyword: '川西', cover: '/images/sichuan.jpg' }
 ]
+const INTENSITY_LABEL = { easy: '轻松', normal: '适中', moderate: '较累', challenge: '挑战' }
 function withFallbackCover(list) {
   return (list || []).map(r => {
     let cover = r.cover
@@ -15,7 +16,10 @@ function withFallbackCover(list) {
       const m = DEST_COVER.find(d => (r.destination || '').indexOf(d.keyword) >= 0)
       cover = m ? m.cover : ''
     }
-    return Object.assign({}, r, { cover: resolveCover(cover) })
+    return Object.assign({}, r, {
+      cover: resolveCover(cover),
+      intensity_label: INTENSITY_LABEL[r.intensity_level] || '适中'
+    })
   })
 }
 

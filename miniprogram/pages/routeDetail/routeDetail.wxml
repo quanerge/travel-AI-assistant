@@ -50,6 +50,19 @@
       <view class="sub" style="margin-top:8rpx;">不含：{{route.fee_excluded}}</view>
     </view>
 
+    <!-- 线路强度（适老化核心信息） -->
+    <view class="card">
+      <view class="title" style="margin-bottom:12rpx;">线路强度</view>
+      <view class="row between" style="margin-bottom:10rpx;">
+        <text class="sub">强度等级</text>
+        <text class="route-itag itag-{{route.intensity_level || 'normal'}}">{{route.intensity_level === 'easy' ? '轻松' : (route.intensity_level === 'moderate' ? '较累' : (route.intensity_level === 'challenge' ? '挑战' : '适中'))}}</text>
+      </view>
+      <view class="sub" wx:if="{{route.max_altitude}}">最高海拔：约 {{route.max_altitude}} 米</view>
+      <view class="sub" wx:if="{{route.daily_walk}}" style="margin-top:6rpx;">每日步行：约 {{route.daily_walk}} 公里</view>
+      <view class="sub" wx:if="{{route.suitable_age_min}}" style="margin-top:6rpx;">适合年龄：{{route.suitable_age_min}}–{{route.suitable_age_max}} 岁</view>
+      <view class="sub" wx:if="{{route.suitable_crowd}}" style="margin-top:10rpx;">适合人群：{{route.suitable_crowd}}</view>
+    </view>
+
     <!-- 注意事项 -->
     <view class="card">
       <view class="title" style="margin-bottom:8rpx;">注意事项</view>

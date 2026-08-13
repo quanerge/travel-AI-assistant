@@ -34,6 +34,9 @@
       <view class="route-ph" wx:else>{{item.destination}}</view>
       <view class="route-scrim">
         <view class="route-name">{{item.name}}</view>
+        <view class="route-itag-row" wx:if="{{item.intensity_label}}">
+          <text class="route-itag itag-{{item.intensity_level || 'normal'}}">{{item.intensity_label}}</text>
+        </view>
         <view class="route-meta">
           <text>{{item.destination}} · {{item.days}}天</text>
           <text class="route-price">¥{{item.price}}</text>

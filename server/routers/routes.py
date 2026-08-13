@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/routes", tags=["routes"])
 def list_routes(category: str = None, keyword: str = None,
                 min_days: int = None, max_days: int = None,
                 departure: str = None, price_min: float = None, price_max: float = None,
+                intensity: str = None,
                 page: int = None, page_size: int = 50, response: Response = None,
                 db: Session = Depends(get_db)):
     q = db.query(Route)
@@ -32,6 +33,8 @@ def list_routes(category: str = None, keyword: str = None,
         q = q.filter(Route.price >= price_min)
     if price_max is not None:
         q = q.filter(Route.price <= price_max)
+    if intensity:
+        q = q.filter(Route.intensity_level == intensity)
     total, items = paginate(q, page, page_size)
     set_pagination_headers(response, page, page_size, total)
     return items

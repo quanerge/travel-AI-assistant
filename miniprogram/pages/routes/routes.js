@@ -20,6 +20,15 @@ const priceRanges = [
   { v: 'p610', label: '6000-10000' },
   { v: 'p10k', label: '10000以上' }
 ]
+// 强度等级（适老化核心维度：海拔、走路多少、适不适合年纪，比天数/价格更影响决策）
+const intensityOptions = [
+  { v: 'all', label: '不限' },
+  { v: 'easy', label: '轻松' },
+  { v: 'normal', label: '适中' },
+  { v: 'moderate', label: '较累' },
+  { v: 'challenge', label: '挑战' }
+]
+const intensityLabelMap = { easy: '轻松', normal: '适中', moderate: '较累', challenge: '挑战' }
 
 // 天数/价格区间断言（避免手动填两个数，改选项式）
 function dayTest(v) {
@@ -40,18 +49,23 @@ function priceTest(v) {
     p10k: x => x.price > 10000
   }[v] || (() => true)
 }
+function intensityTest(v) {
+  if (!v || v === 'all') return () => true
+  return x => (x.intensity_level || 'normal') === v
+}
 
 Page({
   data: {
     categories,
     dayRanges,
     priceRanges,
+    intensityOptions,
     departureOptions: ['不限'],
     activeCat: '全部',
     keyword: '',
     list: [],
     allRoutes: [],           // 原始全量，筛选基于此（避免每次搜索都请求网络）
-    filters: { dayRange: 'all', priceRange: 'all', departure: '不限' },
+    filters: { dayRange: 'all', priceRange: 'all', departure: '不限', intensity: 'all' },
     showFilters: false,      // 筛选面板默认收起，节省页面空间
     filterSummary: '全部',
     activeCount: 0
@@ -73,14 +87,15 @@ Page({
 
   // 本地筛选（纯前端，不重发请求）
   applyFilters() {
-    const { allRoutes, activeCat, keyword, filters, dayRanges, priceRanges } = this.data
+    const { allRoutes, activeCat, keyword, filters, dayRanges, priceRanges, intensityOptions } = this.data
     const kw = (keyword || '').trim()
     const dTest = dayTest(filters.dayRange)
     const pTest = priceTest(filters.priceRange)
+    const iTest = intensityTest(filters.intensity)
     let r = allRoutes
     if (activeCat !== '全部') r = r.filter(x => x.category === activeCat)
     if (kw) r = r.filter(x => (x.name || '').indexOf(kw) >= 0 || (x.destination || '').indexOf(kw) >= 0)
-    r = r.filter(dTest).filter(pTest)
+    r = r.filter(dTest).filter(pTest).filter(iTest)
     if (filters.departure && filters.departure !== '不限') {
       r = r.filter(x => (x.departure || '') === filters.departure)
     }
@@ -95,11 +110,18 @@ Page({
       const it = priceRanges.find(d => d.v === filters.priceRange)
       if (it) { parts.push(it.label); count++ }
     }
+    if (filters.intensity !== 'all') {
+      const it = intensityOptions.find(d => d.v === filters.intensity)
+      if (it) { parts.push(it.label); count++ }
+    }
     if (filters.departure && filters.departure !== '不限') {
       parts.push(filters.departure); count++
     }
     this.setData({
-      list: r.map(x => Object.assign({}, x, { cover: resolveCover(x.cover) })),
+      list: r.map(x => Object.assign({}, x, {
+        cover: resolveCover(x.cover),
+        intensity_label: intensityLabelMap[x.intensity_level] || '适中'
+      })),
       filterSummary: parts.length ? parts.join(' · ') : '全部',
       activeCount: count
     })
@@ -126,6 +148,10 @@ Page({
     this.setData({ 'filters.departure': e.currentTarget.dataset.v }, () => this.applyFilters())
   },
 
+  pickIntensity(e) {
+    this.setData({ 'filters.intensity': e.currentTarget.dataset.v }, () => this.applyFilters())
+  },
+
   switchCat(e) {
     this.setData({ activeCat: e.currentTarget.dataset.cat }, () => this.applyFilters())
   },
@@ -134,7 +160,7 @@ Page({
     this.setData({
       activeCat: '全部',
       keyword: '',
-      filters: { dayRange: 'all', priceRange: 'all', departure: '不限' }
+      filters: { dayRange: 'all', priceRange: 'all', departure: '不限', intensity: 'all' }
     }, () => this.applyFilters())
   },
 

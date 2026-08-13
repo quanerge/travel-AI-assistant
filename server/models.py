@@ -67,6 +67,13 @@ class Route(Base):
     fee_excluded = Column(Text, nullable=True)
     notice = Column(Text, nullable=True)
     created_by = Column(Integer, nullable=True)
+    # —— 适老化强度维度（功能1：线路强度标签）——
+    intensity_level = Column(String(16), default="normal")   # easy / normal / moderate / challenge
+    max_altitude = Column(Integer, nullable=True)            # 最高海拔（米）
+    suitable_crowd = Column(String(128), nullable=True)      # 适合人群/年龄描述
+    daily_walk = Column(Integer, nullable=True)              # 每日步行量（公里）
+    suitable_age_min = Column(Integer, nullable=True)        # 适合年龄下限
+    suitable_age_max = Column(Integer, nullable=True)        # 适合年龄上限
     created_at = Column(DateTime, default=datetime.utcnow)
     route_days = relationship(
         "RouteDay", back_populates="route",

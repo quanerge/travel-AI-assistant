@@ -116,3 +116,15 @@ page {
   padding: 4rpx 16rpx; border-radius: 999rpx;
   box-shadow: 0 4rpx 12rpx rgba(229,148,43,0.4);
 }
+
+/* 线路卡片强度标签（功能1：适老化强度维度） */
+.route-itag-row { margin-top: 8rpx; }
+.route-itag {
+  display: inline-block; padding: 2rpx 14rpx; border-radius: 8rpx;
+  font-size: 20rpx; font-weight: 600; line-height: 1.5;
+}
+.itag-easy { background: rgba(14,159,110,0.92); color: #fff; }
+.itag-normal { background: rgba(79,192,141,0.92); color: #063; }
+.itag-moderate { background: rgba(245,166,35,0.92); color: #fff; }
+.itag-challenge { background: rgba(229,90,50,0.92); color: #fff; }
+

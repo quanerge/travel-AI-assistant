@@ -41,6 +41,12 @@ class RouteCreate(BaseModel):
     fee_included: Optional[str] = None
     fee_excluded: Optional[str] = None
     notice: Optional[str] = None
+    intensity_level: Optional[str] = "normal"
+    max_altitude: Optional[int] = None
+    suitable_crowd: Optional[str] = None
+    daily_walk: Optional[int] = None
+    suitable_age_min: Optional[int] = None
+    suitable_age_max: Optional[int] = None
     cost_price: Optional[float] = None
     profit: Optional[float] = None
     gallery: Optional[List[str]] = None
@@ -62,6 +68,12 @@ class RouteUpdate(BaseModel):
     fee_included: Optional[str] = None
     fee_excluded: Optional[str] = None
     notice: Optional[str] = None
+    intensity_level: Optional[str] = None
+    max_altitude: Optional[int] = None
+    suitable_crowd: Optional[str] = None
+    daily_walk: Optional[int] = None
+    suitable_age_min: Optional[int] = None
+    suitable_age_max: Optional[int] = None
     cost_price: Optional[float] = None
     profit: Optional[float] = None
     gallery: Optional[List[str]] = None
@@ -90,6 +102,12 @@ class RouteOut(BaseModel):
     fee_included: Optional[str] = None
     fee_excluded: Optional[str] = None
     notice: Optional[str] = None
+    intensity_level: Optional[str] = None
+    max_altitude: Optional[int] = None
+    suitable_crowd: Optional[str] = None
+    daily_walk: Optional[int] = None
+    suitable_age_min: Optional[int] = None
+    suitable_age_max: Optional[int] = None
     route_days: List[RouteDayOut] = []
 
     @field_validator("gallery", mode="before")

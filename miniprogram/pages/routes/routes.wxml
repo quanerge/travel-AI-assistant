@@ -47,6 +47,16 @@
                 data-v="{{item}}" bindtap="pickDeparture">{{item}}</view>
         </view>
       </view>
+
+      <!-- 线路强度：适老化核心维度（海拔/走路多少/适不适合年纪） -->
+      <view class="fgroup">
+        <view class="flabel">线路强度</view>
+        <view class="opts">
+          <view wx:for="{{intensityOptions}}" wx:key="v"
+                class="opt {{filters.intensity === item.v ? 'opt-on' : ''}}"
+                data-v="{{item.v}}" bindtap="pickIntensity">{{item.label}}</view>
+        </view>
+      </view>
     </block>
   </view>
 
@@ -65,6 +75,9 @@
       <view class="route-ph" wx:else>{{item.destination}}</view>
       <view class="route-scrim">
         <view class="route-name">{{item.name}}</view>
+        <view class="route-itag-row" wx:if="{{item.intensity_label}}">
+          <text class="route-itag itag-{{item.intensity_level || 'normal'}}">{{item.intensity_label}}</text>
+        </view>
         <view class="route-meta">
           <text>{{item.destination}} · {{item.days}}天</text>
           <text class="route-price">¥{{item.price}}</text>

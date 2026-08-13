@@ -59,6 +59,13 @@ def migrate():
         ("customer", "community", "VARCHAR(128)"),
         ("customer", "is_deleted", "INTEGER"),
         ("customer", "deleted_at", "DATETIME"),
+        # 功能1：线路强度维度
+        ("route", "intensity_level", "VARCHAR(16)"),
+        ("route", "max_altitude", "INTEGER"),
+        ("route", "suitable_crowd", "VARCHAR(128)"),
+        ("route", "daily_walk", "INTEGER"),
+        ("route", "suitable_age_min", "INTEGER"),
+        ("route", "suitable_age_max", "INTEGER"),
     ]
     conn = engine.raw_connection()
     try:
