@@ -1,6 +1,7 @@
 # server/routers/orders.py
 import time
 import re
+import logging
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import or_
@@ -12,7 +13,10 @@ from routers.customers import upsert_customer_from_contact
 from routers.auth import get_current_admin, get_current_user, get_principal
 from utils.crypto import encrypt_phone
 from utils.pagination import paginate, set_pagination_headers
+from utils.wechat import send_subscribe_message
 from models import AdminUser, User
+
+logger = logging.getLogger("lvguanjia.orders")
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -25,6 +29,30 @@ def _attach_route_name(db: Session, orders):
         for o in orders:
             o.route_name = mapping.get(o.route_id)
     return orders
+
+
+def _push_pre_trip(db: Session, order):
+    """定金确认（行程锁定）后，向用户推送行前提醒订阅消息（thing1/name2/time3）。
+    失败（未授权/未配置）静默降级，不影响主流程。"""
+    try:
+        u = db.query(User).filter(User.id == order.user_id).first()
+        if not u or not u.openid:
+            return
+        route_name = ""
+        if order.route_id:
+            r = db.query(Route).filter(Route.id == order.route_id).first()
+            route_name = r.name if r else ""
+        data = {
+            "thing1": {"value": (route_name or "您的旅行行程")[:20]},
+            "name2": {"value": "专属旅游顾问"},
+            "time3": {"value": (order.departure_date or datetime.utcnow().strftime("%Y-%m-%d"))[:20]},
+        }
+        send_subscribe_message(
+            u.openid, data,
+            page="pages/orderDetail/orderDetail?id=" + str(order.id)
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("行前提醒推送异常: %s", e)
 
 
 @router.post("", response_model=OrderOut)
@@ -147,6 +175,8 @@ def confirm_deposit(order_id: int, admin: AdminUser = Depends(get_current_admin)
     db.add(Payment(order_id=o.id, type="deposit", amount=o.deposit_amount or 0,
                    method="offline", status="paid", operator_id=admin.id))
     db.commit()
+    # 行程锁定：向用户推送行前提醒（订阅消息，需用户在小程序端授权）
+    _push_pre_trip(db, o)
     return {"status": o.status, "msg": "定金已确认"}
 
 

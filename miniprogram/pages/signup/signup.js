@@ -1,5 +1,6 @@
 // pages/signup/signup.js
 const api = require('../../utils/api')
+const config = require('../../utils/config')
 const app = getApp()
 const { resolveCover } = require('../../utils/cover')
 
@@ -101,9 +102,18 @@ Page({
     const uid = app.globalData.userId
     const payload = Object.assign({ route_id: this.data.route ? this.data.route.id : null, user_id: uid || null }, f)
     if (this.data.selectedCoupon) payload.coupon_id = this.data.selectedCoupon.id
+    // 报名时请求一次性订阅授权，便于顾问确认收款后推送行前提醒（用户可拒，不影响报名）
+    this._requestSubscribe()
     api.submitSignup(payload).then(() => {
       this.setData({ submitted: true })
     })
+  },
+
+  // 请求微信订阅消息授权（行前提醒用）；模板 ID 来自 config.subscribeTemplateId
+  _requestSubscribe() {
+    const tmpl = config.subscribeTemplateId
+    if (!tmpl) return
+    wx.requestSubscribeMessage({ tmplIds: [tmpl], fail: () => {} })
   },
 
   goOrders() { wx.navigateTo({ url: '/pages/orders/orders' }) },
