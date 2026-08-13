@@ -3,7 +3,7 @@
 .signup-hero { width: 100%; height: 300rpx; }
 .fld {
   display: flex; align-items: center; padding: 24rpx 0;
-  border-bottom: 2rpx solid #F0F2F5; font-size: 28rpx;
+  border-bottom: 2rpx solid #F0F2F5; font-size: 30rpx;
 }
 .fld input { flex: 1; margin-left: 24rpx; text-align: right; }
 .req { color: var(--danger); margin-right: 8rpx; }

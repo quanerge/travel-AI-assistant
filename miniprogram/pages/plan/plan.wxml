@@ -10,7 +10,7 @@
       <!-- 目的地：自由输入 + 热门快捷标签（可写任意目的地，不再受固定列表限制） -->
       <view class="field-block field-divider">
         <view class="field-label"><text class="req">*</text>目的地</view>
-        <input class="dest-input" placeholder="可输入任意目的地，如：云南大理 / 日本东京" value="{{form.destination}}" bindinput="onDestInput" maxlength="30" />
+        <input class="dest-input" placeholder="请输入目的地，如：云南大理" value="{{form.destination}}" bindinput="onDestInput" maxlength="30" />
         <view class="dest-chips">
           <view wx:for="{{destChips}}" wx:key="*this"
                 class="dest-chip {{form.destination === item ? 'dest-chip-on' : ''}}"
