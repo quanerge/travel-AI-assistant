@@ -166,6 +166,9 @@ class OrderOut(BaseModel):
     discount_amount: Optional[float] = 0
     deposit_amount: Optional[float] = 0
     cost_snapshot: Optional[float] = None
+    balance_amount: Optional[float] = 0
+    balance_paid: Optional[bool] = False
+    settled_at: Optional[datetime] = None
     is_deleted: Optional[bool] = None
     deleted_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
@@ -175,6 +178,18 @@ class OrderOut(BaseModel):
     def _dec_order_phone(cls, v):
         """DB 中手机号按 enc: 前缀加密存储，读取时解密还原。"""
         return decrypt_phone(v)
+
+    @field_validator("balance_amount", "discount_amount", "deposit_amount", mode="before")
+    @classmethod
+    def _coerce_order_num(cls, v):
+        """历史行经 ALTER COLUMN 加浮点列后可能为 NULL，统一归约为 0，避免前端显示 null。"""
+        return v if v is not None else 0
+
+    @field_validator("balance_paid", mode="before")
+    @classmethod
+    def _coerce_balance_paid(cls, v):
+        """历史行 balance_paid 可能为 NULL，归约为 False，避免 Pydantic 序列化 500。"""
+        return bool(v) if v is not None else False
 
 
 class ConsultCreate(BaseModel):

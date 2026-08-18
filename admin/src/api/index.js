@@ -66,6 +66,7 @@ export const api = {
   deleteOrder: (id) => http.post(`/orders/${id}/delete`),
   confirmOrder: (id) => http.post(`/orders/${id}/confirm`),
   confirmDeposit: (id) => http.post(`/orders/${id}/confirm-deposit`),
+  confirmBalance: (id) => http.post(`/orders/${id}/confirm-balance`),
   completeOrder: (id) => http.post(`/orders/${id}/complete`),
 
   listBanners: () => http.get('/banners'),
@@ -112,6 +113,15 @@ export const api = {
 
   // AI 智能提取（线路管理「粘贴自动填充」）
   aiExtract: (text) => http.post('/ai/extract', { text }),
+
+  // AI 线路亮点介绍（顾问为客户选定线路后生成可发送的亮点/景点/美食/风光）
+  aiRouteHighlight: (payload) => http.post('/ai/route-highlight', payload),
+
+  // 批量亮点群发：对一批客户就同一条线路各自生成个性化介绍（返回每条可发送全文）
+  aiRouteHighlightBatch: (payload) => http.post('/ai/route-highlight/batch', payload),
+
+  // 客户意向（线路亮点自动分发）：顾问零操作查看谁接受了推荐
+  listRecommendAdmin: (params) => listRes('/recommend/admin', params),
 
   // 用户管理（仅超管）
   listUsers: (params) => listRes('/admin/users', params),

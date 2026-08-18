@@ -35,10 +35,10 @@
         </template>
       </el-table-column>
       <el-table-column prop="created_at" label="提交时间" min-width="180" />
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="200" class-name="op-col">
         <template #default="{ row }">
-          <el-button size="small" type="primary" @click="openReply(row)">回复/生成方案</el-button>
-          <el-button size="small" type="danger" @click="del(row)">删除</el-button>
+          <el-button link type="primary" size="small" @click="openReply(row)">回复</el-button>
+          <el-button link type="danger" size="small" @click="del(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -236,4 +236,6 @@ function del(row) {
 .iti-edit { border: 1px solid #f0f0f0; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
 .iti-edit-row { display: flex; gap: 8rpx; align-items: center; margin-bottom: 8rpx; }
 .tip { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+/* 操作列：放开单元格溢出裁切，确保「删除」按钮不被隐藏 */
+:deep(.op-col .cell) { overflow: visible; white-space: nowrap; }
 </style>

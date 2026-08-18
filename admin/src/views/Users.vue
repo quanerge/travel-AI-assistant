@@ -30,7 +30,7 @@
       <el-table-column label="创建时间" width="170">
         <template #default="{ row }">{{ fmt(row.created_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="240" fixed="right" class-name="op-col">
         <template #default="{ row }">
           <el-button link type="primary" @click="openReset(row)">重置密码</el-button>
           <el-button link type="success" :disabled="row.id === currentId" @click="openRole(row)">改角色</el-button>

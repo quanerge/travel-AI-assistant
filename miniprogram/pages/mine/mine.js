@@ -57,6 +57,7 @@ Page({
   goConsult() { wx.navigateTo({ url: '/pages/consult/consult' }) },
   goPlan() { wx.switchTab({ url: '/pages/plan/plan' }) },
   goFavorites() { wx.navigateTo({ url: '/pages/favorites/favorites' }) },
+  goMyRecommend() { wx.navigateTo({ url: '/pages/myRecommend/myRecommend' }) },
   goAbout() { wx.navigateTo({ url: '/pages/about/about' }) },
   goCoupons() { wx.navigateTo({ url: '/pages/coupons/coupons' }) },
   goMyConsult() { wx.navigateTo({ url: '/pages/myConsult/myConsult' }) },

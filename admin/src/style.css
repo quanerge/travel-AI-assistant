@@ -9,3 +9,7 @@ body {
 .page-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .stat-card { text-align: center; }
 .stat-num { font-size: 28px; font-weight: 700; color: #1677ff; }
+
+/* 操作列防护：Element Plus 默认 .cell{overflow:hidden}，多按钮超宽时尾部按钮被裁切不可见。
+   给操作列加 class-name="op-col" 即可让按钮完整显示（不换行、超出可见）。 */
+.el-table .op-col .cell { overflow: visible; white-space: nowrap; }

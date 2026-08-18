@@ -1,0 +1,48 @@
+<!-- pages/myRecommend/myRecommend.wxml -->
+<view class="page">
+  <view class="tip">顾问为您精选的线路亮点，确认接受后顾问将主动为您跟进 ✨</view>
+
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{!list.length}}" class="empty">
+    <view class="empty-emoji">🗺️</view>
+    <view>暂无推荐</view>
+    <view class="empty-sub">在线路详情「收藏 / 咨询 / 报名」后，顾问精选会自动出现在这里</view>
+  </view>
+
+  <view wx:for="{{list}}" wx:key="id" class="card">
+    <view class="head" bindtap="goDetail" data-id="{{item.route_id}}">
+      <image class="cover" src="{{item.cover || ''}}" mode="aspectFill" />
+      <view class="head-body">
+        <view class="rname">{{item.route_name}}</view>
+        <view class="rmeta">{{item.route_destination}} · {{item.route_days}}天 · ¥{{item.route_price}}/人</view>
+        <view class="badge badge-{{item.status}}">{{item.statusLabel}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{item.highlight}}" class="hl">
+      <view class="hl-overview">{{item.highlight.overview}}</view>
+      <block wx:if="{{item.highlight.must_see.length}}">
+        <view class="hl-title">🌟 必看景点</view>
+        <view class="tags"><text wx:for="{{item.highlight.must_see}}" wx:for-item="t" wx:key="*this" class="tag">{{t}}</text></view>
+      </block>
+      <block wx:if="{{item.highlight.food.length}}">
+        <view class="hl-title">🍜 特色美食</view>
+        <view class="tags"><text wx:for="{{item.highlight.food}}" wx:for-item="t" wx:key="*this" class="tag">{{t}}</text></view>
+      </block>
+      <block wx:if="{{item.highlight.scenery.length}}">
+        <view class="hl-title">🏞 绝美风光</view>
+        <view class="tags"><text wx:for="{{item.highlight.scenery}}" wx:for-item="t" wx:key="*this" class="tag">{{t}}</text></view>
+      </block>
+      <block wx:if="{{item.highlight.tips.length}}">
+        <view class="hl-title">💡 出行贴士</view>
+        <view class="tips"><view wx:for="{{item.highlight.tips}}" wx:for-item="t" wx:key="*this" class="tip-item">· {{t}}</view></view>
+      </block>
+    </view>
+
+    <view class="actions" wx:if="{{item.status === 'pending'}}">
+      <button class="btn btn-ghost" bindtap="decline" data-id="{{item.id}}">暂不感兴趣</button>
+      <button class="btn btn-primary" bindtap="accept" data-id="{{item.id}}">✅ 确认接受</button>
+    </view>
+    <view wx:elif="{{item.status === 'accepted'}}" class="accepted-note">✅ 您已接受，顾问将尽快与您联系</view>
+  </view>
+</view>

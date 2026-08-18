@@ -72,6 +72,19 @@
       </el-col>
     </el-row>
 
+    <!-- 待收尾款（尾款管理核心指标）：点击前往收款 -->
+    <el-row :gutter="16" style="margin-top:16px">
+      <el-col :span="24">
+        <el-card class="page-card balance-card" @click="goOrders('balance_pending')">
+          <div class="balance-inline">
+            <span class="balance-label">待收尾款（元）</span>
+            <span class="balance-num">{{ money(d.pending_balance_amount) }}</span>
+            <span class="balance-sub">共 {{ d.pending_balance_orders }} 笔待付尾款订单 · 点击前往收款</span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <el-row :gutter="16" style="margin-top:16px">
       <!-- 待办 -->
       <el-col :span="10">
@@ -81,9 +94,9 @@
             <span>待确认订单</span>
             <span class="todo-num warn">{{ d.pending_confirm_orders }}</span>
           </div>
-          <div class="todo-row" @click="goOrders">
-            <span>待收定金订单</span>
-            <span class="todo-num warn">{{ d.pending_deposit_orders }}</span>
+          <div class="todo-row" @click="goOrders('balance_pending')">
+            <span>待付尾款订单</span>
+            <span class="todo-num warn">{{ d.pending_balance_orders }}</span>
           </div>
           <div class="todo-row">
             <span>当前在售线路</span>
@@ -134,6 +147,7 @@ const loading = ref(true)
 const d = ref({
   today_orders: 0, month_income: 0, profit: 0, customer_growth: 0,
   active_routes: 0, pending_confirm_orders: 0, pending_deposit_orders: 0,
+  pending_balance_orders: 0, pending_balance_amount: 0,
   top_routes: [], order_trend: [], birthday_reminders: []
 })
 
@@ -160,7 +174,7 @@ const trend = computed(() => {
 })
 const trendMax = computed(() => Math.max(1, ...trend.value.map(p => p.count)))
 
-const goOrders = () => router.push('/orders')
+const goOrders = (status) => router.push(status ? { path: '/orders', query: { status } } : '/orders')
 // 点击生日关怀提醒：带 care=birthday 跳转到客户管理，由 CRM 页高亮今天/明天生日的客户
 const goCustomers = () => router.push({ path: '/customers', query: { care: 'birthday' } })
 
@@ -184,6 +198,12 @@ onMounted(async () => {
 .stat-label { color: #888; font-size: 13px; }
 .stat-num { font-size: 30px; font-weight: 700; margin-top: 6px; color: #2b7fff; }
 .birthday-alert { margin-bottom: 16px; }
+.balance-card { cursor: pointer; background: linear-gradient(135deg, #fff7e6, #fff1d6); border: 1px solid #ffd591; transition: .2s; }
+.balance-card:hover { box-shadow: 0 4px 16px rgba(250,140,22,.2); }
+.balance-inline { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.balance-label { font-size: 15px; font-weight: 600; color: #d46b08; }
+.balance-num { font-size: 34px; font-weight: 800; color: #fa8c16; margin-left: 8px; }
+.balance-sub { font-size: 13px; color: #b06a18; }
 .ba-title { font-weight: 700; }
 .ba-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
 .ba-card {

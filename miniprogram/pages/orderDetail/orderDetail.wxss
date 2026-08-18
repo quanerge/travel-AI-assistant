@@ -10,6 +10,7 @@
 .step-on .step-label { color: var(--primary); }
 
 /* 线路信息卡片 */
+.price { font-weight: 600; color: #ff7a00; }
 .route-name { font-size: 34rpx; font-weight: 700; color: #1A1A1A; }
 .rich { flex: 1; text-align: right; color: #4A4A4A; font-size: 26rpx; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 /* 让行程说明这类长文本在 kv 内左对齐、可换行 */

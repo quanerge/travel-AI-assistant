@@ -17,6 +17,8 @@
     <view class="kv"><text class="sub">人数</text><text>{{order.person_count}} 人</text></view>
     <view class="kv"><text class="sub">出发日期</text><text>{{order.departure_date}}</text></view>
     <view class="kv" wx:if="{{order.remark}}"><text class="sub">备注</text><text>{{order.remark}}</text></view>
+    <view class="kv"><text class="sub">定金</text><text>{{ order.deposit_paid ? ('¥'+order.deposit_amount) : '未付' }}</text></view>
+    <view class="kv" wx:if="{{order.balance_amount > 0}}"><text class="sub">尾款</text><text>{{ order.balance_paid ? ('¥'+order.balance_amount+'（已收）') : ('¥'+order.balance_amount+'（待付）') }}</text></view>
     <view class="kv"><text class="sub">金额</text><text class="price">¥{{order.total_amount || '--'}}</text></view>
   </view>
 
@@ -56,6 +58,22 @@
       <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="callAdvisor">电话联系</button>
       <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="copyWechat">复制微信</button>
     </view>
+  </view>
+
+  <!-- 尾款支付（线下）：仅当订单存在未收尾款时展示 -->
+  <view class="card" wx:if="{{order.balance_amount > 0 && !order.balance_paid}}" style="background:#FFF8F0;">
+    <view class="title" style="margin-bottom:8rpx;">尾款支付（线下）</view>
+    <view class="sub">应付尾款 <text class="price">¥{{order.balance_amount}}</text>。请按顾问指引通过微信转账支付尾款，顾问确认收款后订单结清、行程锁定。</view>
+    <view class="sub" style="margin-top:8rpx;" wx:if="{{advisor.name}}">专属顾问：{{advisor.name}}（工作时间 {{advisor.worktime}}）</view>
+    <view class="row" style="gap:16rpx;margin-top:20rpx;">
+      <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="callAdvisor">电话联系</button>
+      <button class="btn btn-ghost" style="flex:1;margin:0;" bindtap="copyWechat">复制微信</button>
+    </view>
+  </view>
+  <!-- 尾款已收确认提示 -->
+  <view class="card" wx:elif="{{order.balance_paid}}" style="background:#F6FFED;border:1rpx solid #B7EB8F;">
+    <view class="title" style="margin-bottom:8rpx;">尾款已结清</view>
+    <view class="sub">尾款 ¥{{order.balance_amount}} 已由顾问确认收款，订单已完成、行程锁定。祝您旅途愉快！</view>
   </view>
 </view>
 <view wx:else class="empty">加载中…</view>

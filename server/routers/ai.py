@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from database import get_db
-from models import ConsultRecord, Route, User, AdminUser, AIConversation, AIMessage
+from models import ConsultRecord, Route, User, Customer, AdminUser, AIConversation, AIMessage
 from typing import Optional
 from routers.auth import get_current_user, get_current_admin
 from utils.llm import chat_completion, ping, _api_key
@@ -380,3 +380,225 @@ def ai_extract(req: AIExtractReq, admin: AdminUser = Depends(get_current_admin))
             })
         data["route_days"] = cleaned or None
     return data
+
+
+# --------------------------------------------------------------------------- #
+# 线路亮点介绍（顾问为客户选定线路后，一键生成可发送的亮点/景点/美食/风光）
+# --------------------------------------------------------------------------- #
+HIGHLIGHT_SYSTEM_PROMPT = """你是「旅途管家」的资深旅游顾问，服务于一位个人旅游顾问的私域客户。
+请为给定线路生成一份面向客户的「亮点介绍」，用于顾问通过微信发送给客户。
+要求专业、亲切、可信，突出线路卖点与适配人群。
+
+必须严格只返回 JSON，结构如下（不要任何额外文字）：
+{
+  "overview": "1-2 句亮点概览，点明线路最打动人的地方与适合人群",
+  "must_see": ["必看景点1", "必看景点2", "..."],   // 3-6 条，每条≤25字
+  "food": ["特色美食1", "特色美食2", "..."],         // 3-5 条，每条≤20字
+  "scenery": ["绝美风光/体验1", "绝美风光/体验2", "..."], // 3-5 条，每条≤25字
+  "tips": ["出行贴士1", "出行贴士2", "..."]          // 3-5 条，每条≤30字，含装备/时令/避坑
+}
+注意：
+- 必须基于线路已有信息（名称/目的地/天数/行程/适老强度等），可适度发挥但不得编造虚假价格、航班、酒店名；价格一律以给定为准。
+- 若线路信息不足，可基于目的地通用旅行知识合理补充，并在 overview 末尾用括号注明「部分细节建议顾问补充」。
+- 如带入客户偏好（年龄/预算/兴趣/小区），在 tips 中适当体现个性化建议，让介绍更贴心。"""
+
+
+class AIHighlightReq(BaseModel):
+    route_id: int = Field(..., description="线路 id")
+    customer_id: Optional[int] = None   # 可选：带入客户偏好做个性化
+    save: bool = True                   # 是否把生成结果写回线路缓存（默认写，供小程序读取）
+
+
+class AIHighlightResp(BaseModel):
+    route_id: int
+    route_name: str
+    overview: str
+    must_see: list = []
+    food: list = []
+    scenery: list = []
+    tips: list = []
+    share_text: str
+    source: str = "llm"            # llm / fallback
+    warning: Optional[str] = None
+
+
+class AIHighlightBatchReq(BaseModel):
+    route_id: int = Field(..., description="线路 id")
+    customer_ids: list = []        # 批量生成的客户 id 列表（逐一带入偏好做个性化）
+
+
+def _route_highlight_ctx(route: Route, customer: Customer = None) -> str:
+    """拼装线路上下文（含每日行程 + 适老强度 + 可选客户偏好），作为大模型输入。"""
+    inten = {'easy': '轻松', 'normal': '适中', 'moderate': '较累', 'challenge': '挑战'}.get(
+        route.intensity_level, '适中')
+    lines = [
+        f"线路名称：{route.name}",
+        f"分类：{route.category or '—'}",
+        f"出发地：{route.departure}　目的地：{route.destination}　天数：{route.days}天　人均：¥{route.price}",
+        f"评分：{route.rating}　已报名：{route.signup_count}/{route.group_size}",
+        f"行程亮点：{route.description or '—'}",
+        f"费用包含：{route.fee_included or '—'}",
+        f"费用不含：{route.fee_excluded or '—'}",
+        f"注意事项：{route.notice or '—'}",
+        f"线路强度：{inten}（最高海拔{route.max_altitude or '未知'}米，每日步行约{route.daily_walk or '未知'}公里，"
+        f"适合年龄{route.suitable_age_min or '—'}–{route.suitable_age_max or '—'}岁，适合人群：{route.suitable_crowd or '通用'}）",
+    ]
+    if route.route_days:
+        lines.append("每日行程：")
+        for d in route.route_days:
+            lines.append(
+                f"  第{d.day_no}天 {d.title}：{d.content or '—'}"
+                f"（餐饮：{d.meals or '—'}；住宿：{d.accommodation or '—'}；交通：{d.traffic or '—'}）"
+            )
+    if customer:
+        prefs = []
+        if customer.name:
+            prefs.append(f"客户称呼：{customer.name}")
+        if customer.travel_preference:
+            prefs.append(f"旅行偏好：{customer.travel_preference}")
+        if customer.budget_range:
+            prefs.append(f"预算区间：{customer.budget_range}")
+        if customer.community:
+            prefs.append(f"所在小区：{customer.community}")
+        if customer.tags:
+            prefs.append(f"标签：{customer.tags}")
+        if prefs:
+            lines.append("【客户个性化信息，用于让介绍更贴心】\n" + "\n".join(prefs))
+    return "\n".join(lines)
+
+
+def _highlight_fallback(route: Route, customer: Customer = None) -> dict:
+    """大模型不可用时的规则兜底：基于资料拼一份最小可用介绍，保证功能不崩。"""
+    days = route.route_days or []
+    must_see = [f"第{d.day_no}天 {d.title}" for d in days][:6] or [f"{route.destination}核心景区游览"]
+    food = ["当地特色餐（以行程餐饮安排为准）"]
+    scenery = [f"{route.destination}自然/人文风光"] if route.destination else []
+    tips = []
+    inten = {'easy': '轻松', 'normal': '适中', 'moderate': '较累', 'challenge': '挑战'}.get(route.intensity_level, '适中')
+    tips.append(f"线路强度{inten}，请按自身体力合理安排节奏")
+    if route.max_altitude:
+        tips.append(f"最高海拔约{route.max_altitude}米，注意预防高原反应")
+    if route.suitable_age_min:
+        tips.append(f"适合{route.suitable_age_min}–{route.suitable_age_max or '?'}岁人群，老人出行建议家属陪同")
+    tips.append("具体行程与价格以顾问确认方案为准")
+    overview = (f"{route.name}（{route.days}天，{route.departure}出发，人均¥{route.price}）"
+                + (f"：{route.description}" if route.description else "，行程亮点已在上文列出，欢迎咨询顾问获取详情。"))
+    return {"overview": overview, "must_see": must_see, "food": food, "scenery": scenery, "tips": tips}
+
+
+def _build_share_text(route: Route, overview: str, must_see, food, scenery, tips, customer: Customer = None) -> str:
+    """把结构化亮点拼成可直接复制发给客户的纯文本（含 emoji 分段 + 免责声明）。"""
+    name = customer.name if customer and customer.name else ""
+    lines = [f"【{route.name} · {route.days}天】亮点介绍"]
+    if name:
+        lines.append(f"{name}老师，为您精选的这条线路：")
+    lines.append(overview)
+    lines.append("")
+    if must_see:
+        lines.append("🌟 必看景点")
+        lines += [f"· {x}" for x in must_see]
+        lines.append("")
+    if food:
+        lines.append("🍜 特色美食")
+        lines += [f"· {x}" for x in food]
+        lines.append("")
+    if scenery:
+        lines.append("🏞 绝美风光")
+        lines += [f"· {x}" for x in scenery]
+        lines.append("")
+    if tips:
+        lines.append("💡 出行贴士")
+        lines += [f"· {x}" for x in tips]
+        lines.append("")
+    lines.append("（以上由 AI 生成，仅供参考，具体行程与价格以顾问确认方案为准）")
+    return "\n".join(lines)
+
+
+def _build_highlight(route: Route, customer: Customer = None) -> dict:
+    """生成线路亮点（核心逻辑）：调大模型或降级兜底，返回结构化结果字典。
+    供 POST /route-highlight、公开 GET /routes/<id>/highlight、批量端点共用。"""
+    ctx = _route_highlight_ctx(route, customer)
+    try:
+        raw = chat_completion([
+            {"role": "system", "content": HIGHLIGHT_SYSTEM_PROMPT},
+            {"role": "user", "content": "请为以下线路生成亮点介绍：\n" + ctx},
+        ], json_mode=True, max_tokens=1500)
+        # 防御：某些模型会在 JSON 外包 ```json 代码块
+        raw = raw.strip()
+        if raw.startswith("```"):
+            s, e = raw.find("{"), raw.rfind("}")
+            raw = raw[s:e + 1] if s != -1 and e != -1 else raw
+        data = json.loads(raw)
+        must_see = [str(x) for x in (data.get("must_see") or []) if x][:8]
+        food = [str(x) for x in (data.get("food") or []) if x][:8]
+        scenery = [str(x) for x in (data.get("scenery") or []) if x][:8]
+        tips = [str(x) for x in (data.get("tips") or []) if x][:8]
+        overview = str(data.get("overview") or "")
+        source, warning = "llm", None
+    except Exception as e:  # noqa: BLE001
+        fb = _highlight_fallback(route, customer)
+        must_see, food, scenery, tips, overview = (
+            fb["must_see"], fb["food"], fb["scenery"], fb["tips"], fb["overview"])
+        source, warning = "fallback", f"AI 生成失败，已用资料模板兜底：{e}"
+    share_text = _build_share_text(route, overview, must_see, food, scenery, tips, customer)
+    return {
+        "overview": overview, "must_see": must_see, "food": food,
+        "scenery": scenery, "tips": tips, "share_text": share_text,
+        "source": source, "warning": warning,
+    }
+
+
+@router.post("/route-highlight", response_model=AIHighlightResp)
+def ai_route_highlight(req: AIHighlightReq, admin: AdminUser = Depends(get_current_admin),
+                       db: Session = Depends(get_db)):
+    route = db.query(Route).filter(Route.id == req.route_id).first()
+    if not route:
+        raise HTTPException(404, "线路不存在")
+    customer = None
+    if req.customer_id:
+        customer = db.query(Customer).filter(Customer.id == req.customer_id).first()
+
+    h = _build_highlight(route, customer)
+    # 写回线路缓存：小程序端此后直接读缓存，避免每次打开都调大模型
+    if req.save:
+        try:
+            route.ai_highlight = json.dumps(h, ensure_ascii=False)
+            db.add(route)
+            db.commit()
+        except Exception:  # noqa: BLE001
+            db.rollback()
+    return AIHighlightResp(
+        route_id=route.id, route_name=route.name,
+        overview=h["overview"], must_see=h["must_see"], food=h["food"],
+        scenery=h["scenery"], tips=h["tips"], share_text=h["share_text"],
+        source=h["source"], warning=h["warning"],
+    )
+
+
+@router.post("/route-highlight/batch")
+def ai_route_highlight_batch(req: AIHighlightBatchReq,
+                             admin: AdminUser = Depends(get_current_admin),
+                             db: Session = Depends(get_db)):
+    """批量亮点群发（管理后台）：对一批客户就同一条线路各自生成个性化亮点介绍。
+
+    逐客户带入偏好做个性化；不写回线路缓存（缓存是线路级通用版，个性化结果随返回下发）。
+    返回列表，每项含 customer_id / customer_name / 四段亮点 / 可发送全文 share_text。
+    """
+    route = db.query(Route).filter(Route.id == req.route_id).first()
+    if not route:
+        raise HTTPException(404, "线路不存在")
+    items = []
+    for cid in (req.customer_ids or []):
+        cust = db.query(Customer).filter(Customer.id == cid).first()
+        name = cust.name if cust else ""
+        h = _build_highlight(route, cust)
+        items.append({
+            "route_id": route.id,
+            "route_name": route.name,
+            "customer_id": cid,
+            "customer_name": name,
+            "overview": h["overview"], "must_see": h["must_see"], "food": h["food"],
+            "scenery": h["scenery"], "tips": h["tips"], "share_text": h["share_text"],
+            "source": h["source"], "warning": h.get("warning"),
+        })
+    return items

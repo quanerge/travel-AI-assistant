@@ -18,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from database import engine, Base, migrate
 import models  # noqa: ensure models registered
-from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat, ai, coupons, config, members, reviews
+from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat, ai, coupons, config, members, reviews, recommend
 
 # 应用版本（可通过环境变量 APP_VERSION 覆盖，便于灰度/环境标记；默认与需求说明书 V1.3 对齐）
 APP_VERSION = os.getenv("APP_VERSION", "V1.3")
@@ -139,6 +139,7 @@ app.include_router(coupons.router)  # 优惠券（领取 / 我的券 / 后台管
 app.include_router(config.router)    # 站点公开配置（顾问联系方式等）
 app.include_router(members.router)    # 会员体系（激活 member 表）
 app.include_router(reviews.router)    # 线路评价晒图（功能①）
+app.include_router(recommend.router)   # 线路亮点自动分发 + 客户确认接受（顾问零操作）
 
 # 本地上传的静态资源（封面图等）：/static/covers/xxx.jpg
 os.makedirs(upload.STATIC_DIR, exist_ok=True)

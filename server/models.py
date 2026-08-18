@@ -1,7 +1,7 @@
 # server/models.py —— 对应需求说明书 V1.1 第 9 章数据库设计
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey, JSON
+    Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey, JSON, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -74,6 +74,7 @@ class Route(Base):
     daily_walk = Column(Integer, nullable=True)              # 每日步行量（公里）
     suitable_age_min = Column(Integer, nullable=True)        # 适合年龄下限
     suitable_age_max = Column(Integer, nullable=True)        # 适合年龄上限
+    ai_highlight = Column(Text, nullable=True)                # AI 亮点解读缓存（JSON 字符串：顾问/小程序读取，避免每次调 LLM）
     created_at = Column(DateTime, default=datetime.utcnow)
     route_days = relationship(
         "RouteDay", back_populates="route",
@@ -112,6 +113,9 @@ class Order(Base):
     discount_amount = Column(Float, default=0)            # 优惠抵扣金额
     deposit_amount = Column(Float, default=0)             # 预估定金（下单时按线路价比例固化）
     cost_snapshot = Column(Float, nullable=True)          # 下单时固化的线路成本快照（人×单价），保证利润可回溯
+    balance_amount = Column(Float, default=0)             # 应收尾款 = 总额 - 优惠抵扣 - 定金（下单时固化）
+    balance_paid = Column(Boolean, default=False)         # 尾款是否已收（顾问后台线下确认收款）
+    settled_at = Column(DateTime, nullable=True)          # 结算时间（尾款收齐，需求 §470 settled_at）
     is_deleted = Column(Boolean, default=False, nullable=False)  # 软删除标记（保留审计与支付记录）
     deleted_at = Column(DateTime, nullable=True)                     # 删除时间
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -286,3 +290,26 @@ class Review(Base):
     images = Column(Text, nullable=True)                    # 晒图 URL 列表，JSON 字符串存储
     status = Column(String(16), default="approved")         # approved / pending / rejected
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class RouteRecommend(Base):
+    """线路亮点自动分发：客户在小程序产生意向（收藏/咨询/下单）即由系统自动推送该线路
+    的 AI 亮点给该客户；客户在「我的推荐」中确认接受后状态回写，顾问零操作即可在后台
+    看到谁接受了推荐。
+
+    一个用户对同一条线路仅保留一条推荐记录（user_id + route_id 唯一约束），幂等 upsert。
+    highlight_json 预生成并缓存，客户端直接读取，避免每次打开都调大模型。
+    """
+    __tablename__ = "route_recommend"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    customer_id = Column(Integer, ForeignKey("customer.id"), nullable=True, index=True)
+    route_id = Column(Integer, ForeignKey("route.id"), nullable=False, index=True)
+    status = Column(String(16), default="pending")      # pending / accepted / declined
+    highlight_json = Column(Text, nullable=True)        # 预生成的 AI 亮点（JSON 字符串）
+    created_at = Column(DateTime, default=datetime.utcnow)
+    accepted_at = Column(DateTime, nullable=True)
+    declined_at = Column(DateTime, nullable=True)
+    __table_args__ = (
+        UniqueConstraint("user_id", "route_id", name="uq_user_route_recommend"),
+    )

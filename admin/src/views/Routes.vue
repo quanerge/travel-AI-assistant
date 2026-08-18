@@ -25,9 +25,10 @@
           <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '上架' : '下架' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280">
+      <el-table-column label="操作" width="320" class-name="op-col">
         <template #default="{ row }">
           <el-button size="small" @click="openDetail(row)">行程</el-button>
+          <el-button size="small" type="warning" @click="openHighlight(row)">AI亮点</el-button>
           <el-button size="small" type="primary" @click="openEdit(row)">编辑</el-button>
           <el-button size="small" :type="row.status === 'active' ? 'warning' : 'success'" @click="toggleStatus(row)">
             {{ row.status === 'active' ? '下架' : '上架' }}
@@ -63,6 +64,9 @@
         </el-timeline>
       </template>
     </el-dialog>
+
+    <!-- AI 线路亮点介绍弹窗 -->
+    <RouteHighlightDialog v-model="hlVisible" :route-id="hlRouteId" />
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="formVisible" :title="isEdit ? '编辑线路' : '新增线路'" width="780px" @closed="resetForm">
@@ -167,6 +171,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../api'
+import RouteHighlightDialog from '../components/RouteHighlightDialog.vue'
 
 const loading = ref(false)
 const rows = ref([])
@@ -178,6 +183,8 @@ const cat = ref('')
 const cats = ['国内游', '短途游', '出境游', '周边游', '主题游']
 const detailVisible = ref(false)
 const detail = ref(null)
+const hlVisible = ref(false)
+const hlRouteId = ref(null)
 
 const formVisible = ref(false)
 const isEdit = ref(false)
@@ -333,6 +340,11 @@ function onPage(p) {
 const openDetail = async (row) => {
   detail.value = await api.getRoute(row.id)
   detailVisible.value = true
+}
+
+const openHighlight = (row) => {
+  hlRouteId.value = row.id
+  hlVisible.value = true
 }
 
 const openCreate = () => {

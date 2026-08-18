@@ -11,8 +11,30 @@
 .day-body { margin-top: 12rpx; padding-left: 8rpx; }
 
 .fav {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 132rpx; color: #9aa3ab; font-size: 22rpx; line-height: 1;
+}
+.fav-heart {
+  width: 60rpx; height: 60rpx; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  width: 120rpx; color: var(--accent); font-size: 26rpx;
+  background: #F2F4F7; margin-bottom: 6rpx; transition: all 0.2s ease;
+}
+.fav-glyph { font-size: 34rpx; line-height: 1; color: #9aa3ab; transition: all 0.2s ease; }
+.fav-label { transition: color 0.2s ease; }
+
+/* 收藏点亮：红心 + 浅红圆底 + 光晕 + 弹跳 */
+.fav.is-fav { color: var(--danger); }
+.fav.is-fav .fav-heart {
+  background: #FFECEC;
+  box-shadow: 0 4rpx 14rpx rgba(255, 77, 79, 0.4);
+}
+.fav.is-fav .fav-glyph { color: var(--danger); animation: fav-pop 0.36s ease; }
+.fav-hover { opacity: 0.72; }
+
+@keyframes fav-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.4); }
+  100% { transform: scale(1); }
 }
 
 /* 用户评价（功能①） */
@@ -24,3 +46,18 @@
 .rev-item:last-child { border-bottom: none; }
 .rev-imgs { display: flex; flex-wrap: wrap; margin-top: 10rpx; }
 .rev-img { width: 150rpx; height: 150rpx; border-radius: 12rpx; margin: 0 12rpx 12rpx 0; background: #E7F6EF; }
+
+/* AI 亮点解读（自动展示，绿主题） */
+.hl-card {
+  border: 2rpx solid #E7F6EF;
+  background: linear-gradient(180deg, #F4FBF8 0%, #FFFFFF 60%);
+  box-shadow: 0 6rpx 18rpx rgba(14, 159, 110, 0.08);
+}
+.hl-title { color: var(--primary); letter-spacing: 1rpx; }
+.hl-badge { font-size: 20rpx; color: #0E9F6E; background: #E7F6EF; padding: 2rpx 12rpx; border-radius: 20rpx; }
+.hl-ov { font-size: 26rpx; color: #37474F; line-height: 1.75; margin-bottom: 10rpx; }
+.hl-sec { margin-top: 14rpx; }
+.hl-sec-t { font-size: 24rpx; font-weight: 600; color: #0E9F6E; margin-bottom: 6rpx; }
+.hl-chip { font-size: 24rpx; color: #455A64; line-height: 1.75; }
+.hl-warn { font-size: 22rpx; color: #BF8F00; margin-top: 12rpx; line-height: 1.6; }
+.hl-loading { color: #0E9F6E; font-size: 24rpx; }

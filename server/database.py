@@ -55,6 +55,9 @@ def migrate():
         ("order", "discount_amount", "FLOAT"),
         ("order", "deposit_amount", "FLOAT"),
         ("order", "cost_snapshot", "FLOAT"),
+        ("order", "balance_amount", "FLOAT"),
+        ("order", "balance_paid", "INTEGER"),
+        ("order", "settled_at", "DATETIME"),
         ("customer", "is_key", "INTEGER"),
         ("customer", "community", "VARCHAR(128)"),
         ("customer", "is_deleted", "INTEGER"),
@@ -66,6 +69,7 @@ def migrate():
         ("route", "daily_walk", "INTEGER"),
         ("route", "suitable_age_min", "INTEGER"),
         ("route", "suitable_age_max", "INTEGER"),
+        ("route", "ai_highlight", "TEXT"),
         # 功能4：会员体系
         ("member", "level_name", "VARCHAR(32)"),
         ("member", "points", "INTEGER"),

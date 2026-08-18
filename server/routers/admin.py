@@ -167,6 +167,9 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
 
     pending_confirm = db.query(Order).filter(Order.status == "pending_confirm").count()
     pending_deposit = db.query(Order).filter(Order.status == "pending_deposit").count()
+    # 待付尾款：订单已收定金、等待顾问收尾款结清（尾款管理核心指标）
+    pending_balance = db.query(Order).filter(Order.status == "balance_pending").count()
+    pending_balance_amount = sum((o.balance_amount or 0) for o in orders if o.status == "balance_pending")
 
     # 生日/纪念日提醒：今天 + 明天过生日的客户（offset 0=今天, 1=明天）
     # 必须排除已软删除客户，否则点击提醒跳转 CRM 后该客户不在默认列表里，看上去"跳过去什么都没有"
@@ -199,6 +202,8 @@ def dashboard(admin: AdminUser = Depends(get_current_admin), db: Session = Depen
         "order_trend": trend_list,
         "pending_confirm_orders": pending_confirm,
         "pending_deposit_orders": pending_deposit,
+        "pending_balance_orders": pending_balance,
+        "pending_balance_amount": round(pending_balance_amount, 2),
         "birthday_reminders": birthday_reminders,
     }
 

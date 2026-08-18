@@ -11,7 +11,9 @@ Page({
     favorited: false,
     reviews: [],
     avgRating: 0,
-    reviewCount: 0
+    reviewCount: 0,
+    highlight: null,        // AI 亮点解读（概览/必看/美食/风光/贴士）
+    highlightLoading: false
   },
 
   onLoad(options) {
@@ -26,6 +28,19 @@ Page({
       wx.setNavigationBarTitle({ title: r.name })
       this.loadFav()
       this.loadReviews()
+      this.loadHighlight(id)
+    })
+  },
+
+  loadHighlight(id) {
+    this.setData({ highlightLoading: true })
+    api.getRouteHighlight(id).then(h => {
+      // 仅展示对客户端有用的字段（share_text 是顾问可发送全文，小程序不展示）
+      if (h && (h.overview || (h.must_see && h.must_see.length))) {
+        this.setData({ highlight: h })
+      }
+    }).catch(() => {}).finally(() => {
+      this.setData({ highlightLoading: false })
     })
   },
 
@@ -76,14 +91,25 @@ Page({
     api.toggleFavorite({ user_id: uid, route_id: this.data.route.id }).then(r => {
       this.setData({ favorited: r.favorited })
       wx.showToast({ title: r.favorited ? '已收藏' : '已取消', icon: 'none' })
+      // 收藏即表达意向 → 自动把该线路亮点推送进「我的推荐」（顾问零操作）
+      if (r.favorited) this._pushRecommend()
     })
   },
 
+  // 自动分发：客户一产生意向（收藏/咨询/报名）即把该线路 AI 亮点推入「我的推荐」
+  _pushRecommend() {
+    const uid = app.globalData.userId
+    if (!uid || !this.data.route) return
+    api.pushRecommend(this.data.route.id).catch(() => {})
+  },
+
   goSignup() {
+    this._pushRecommend()
     wx.navigateTo({ url: '/pages/signup/signup?routeId=' + this.data.id })
   },
 
   goConsult() {
+    this._pushRecommend()
     wx.navigateTo({ url: '/pages/consult/consult?routeId=' + this.data.id })
   },
 

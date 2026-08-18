@@ -17,7 +17,8 @@
     "pages/coupons/coupons",
     "pages/privacy/privacy",
     "pages/ai-chat/ai-chat",
-    "pages/reviewEdit/reviewEdit"
+    "pages/reviewEdit/reviewEdit",
+    "pages/myRecommend/myRecommend"
   ],
   "window": {
     "backgroundTextStyle": "light",

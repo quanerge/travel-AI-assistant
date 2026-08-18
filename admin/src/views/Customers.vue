@@ -19,6 +19,8 @@
         <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
       </el-select>
       <el-button type="primary" @click="openCreate">新增客户</el-button>
+      <el-button type="warning" @click="batchVisible = true">批量亮点群发</el-button>
+      <el-button type="success" @click="openRecommends">客户意向</el-button>
       <el-tooltip content="开启后显示已软删除（隐藏）的客户，可在表格中恢复。" placement="top">
         <span class="switch-item">
           <span class="switch-label">显示已删除</span>
@@ -54,8 +56,8 @@
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="重点" width="64" align="center">
         <template #default="{ row }">
-          <el-tooltip content="重点星标：点击 ★/☆ 切换该客户是否为「重点客户」，便于优先跟进与筛选。" placement="top">
-            <span style="cursor:pointer;font-size:18px;color:#f7ba2a" @click="toggleKey(row)">{{ row.is_key ? '★' : '☆' }}</span>
+          <el-tooltip content="重点星标：点击切换该客户是否为「重点客户」，便于优先跟进与筛选。" placement="top">
+            <KeyStar :active="row.is_key" @toggle="toggleKey(row)" />
           </el-tooltip>
         </template>
       </el-table-column>
@@ -86,11 +88,12 @@
       <el-table-column label="最后联系" width="160">
         <template #default="{ row }">{{ fmt(row.last_contact_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="190" fixed="right">
+      <el-table-column label="操作" width="220" fixed="right" class-name="op-col">
         <template #default="{ row }">
           <div style="white-space: nowrap;">
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
             <el-button link type="success" @click="openFollow(row)">跟进</el-button>
+            <el-button link type="warning" @click="openHighlight(row)">亮点介绍</el-button>
             <el-button v-if="!row.is_deleted" link type="danger" @click="del(row)">删除</el-button>
             <el-button v-else link type="warning" @click="restore(row)">恢复</el-button>
           </div>
@@ -117,13 +120,13 @@
             </template>
           </el-table-column>
           <el-table-column label="重点" width="60" align="center">
-            <template #default="{ row }"><el-tooltip content="重点星标：点击 ★/☆ 切换该客户是否为「重点客户」，便于优先跟进与筛选。" placement="top"><span style="cursor:pointer;color:#f7ba2a;font-size:16px" @click="toggleKey(row)">{{ row.is_key ? '★' : '☆' }}</span></el-tooltip></template>
+            <template #default="{ row }"><el-tooltip content="重点星标：点击切换该客户是否为「重点客户」，便于优先跟进与筛选。" placement="top"><KeyStar :active="row.is_key" @toggle="toggleKey(row)" /></el-tooltip></template>
           </el-table-column>
           <el-table-column prop="community" label="小区" width="120" />
           <el-table-column prop="follow_status" label="状态" width="100">
             <template #default="{ row }"><el-tag :type="statusType(row.follow_status)" size="small">{{ statusLabel(row.follow_status) }}</el-tag></template>
           </el-table-column>
-          <el-table-column label="操作" width="140" fixed="right">
+          <el-table-column label="操作" width="140" fixed="right" class-name="op-col">
             <template #default="{ row }">
               <div style="white-space: nowrap;">
                 <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -224,6 +227,47 @@
         <el-button type="primary" @click="addFollow">添加跟进</el-button>
       </template>
     </el-dialog>
+
+    <!-- AI 线路亮点介绍（不预设线路，由顾问在弹窗内选择该客户选中的线路） -->
+    <RouteHighlightDialog
+      v-model="hlVisible"
+      :customer-id="hlCustomerId"
+      :customer-name="hlCustomerName"
+    />
+
+    <!-- 批量亮点群发（按小区/标签筛选客户，批量生成个性化亮点，逐条/全部复制用于微信群发） -->
+    <BatchHighlightDialog v-model="batchVisible" />
+
+    <!-- 客户意向（线路亮点自动分发结果，顾问零操作查看） -->
+    <el-dialog v-model="recommendVisible" title="客户意向 · 线路亮点分发" width="820px">
+      <div class="rec-summary">
+        <el-radio-group v-model="recStatus" @change="loadRecommends">
+          <el-radio-button label="">全部</el-radio-button>
+          <el-radio-button label="pending">待确认</el-radio-button>
+          <el-radio-button label="accepted">已接受</el-radio-button>
+          <el-radio-button label="declined">暂不感兴趣</el-radio-button>
+        </el-radio-group>
+        <span class="rec-count">共 {{ recommendRows.length }} 条</span>
+      </div>
+      <el-table :data="recommendRows" v-loading="recLoading" border max-height="460">
+        <el-table-column prop="customer_name" label="客户" width="140" />
+        <el-table-column prop="route_name" label="推荐线路" min-width="160" show-overflow-tooltip />
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="recStatusType(row.status)" size="small">{{ recStatusLabel(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="推送时间" width="170">
+          <template #default="{ row }">{{ fmt(row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column label="接受时间" width="170">
+          <template #default="{ row }">{{ row.accepted_at ? fmt(row.accepted_at) : '—' }}</template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="recommendVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
@@ -233,6 +277,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../api'
 import { maskPhone } from '../utils/mask'
+import KeyStar from '../components/KeyStar.vue'
+import RouteHighlightDialog from '../components/RouteHighlightDialog.vue'
+import BatchHighlightDialog from '../components/BatchHighlightDialog.vue'
 
 const loading = ref(false)
 const rows = ref([])
@@ -329,6 +376,49 @@ const followVisible = ref(false)
 const follows = ref([])
 const followText = ref('')
 const followCustomerId = ref(null)
+
+// AI 线路亮点介绍（为客户选定的线路生成可发送的介绍，带入客户偏好做个性化）
+const hlVisible = ref(false)
+const hlCustomerId = ref(null)
+const hlCustomerName = ref('')
+
+  // 批量亮点群发对话框
+  const batchVisible = ref(false)
+
+  // 客户意向（线路亮点自动分发结果）
+  const recommendVisible = ref(false)
+  const recommendRows = ref([])
+  const recommendLoading = ref(false)
+  const recStatus = ref('')
+  const recStatusOptions = [
+    { value: 'pending', label: '待确认', type: 'info' },
+    { value: 'accepted', label: '已接受', type: 'success' },
+    { value: 'declined', label: '暂不感兴趣', type: 'info' }
+  ]
+  function recStatusType(s) {
+    return (recStatusOptions.find(o => o.value === s) || { type: 'info' }).type
+  }
+  function recStatusLabel(s) {
+    return (recStatusOptions.find(o => o.value === s) || { label: s || '待确认' }).label
+  }
+  async function openRecommends() {
+    recStatus.value = ''
+    recommendVisible.value = true
+    await loadRecommends()
+  }
+  async function loadRecommends() {
+    recommendLoading.value = true
+    try {
+      const params = {}
+      if (recStatus.value) params.status = recStatus.value
+      const res = await api.listRecommendAdmin(params)
+      recommendRows.value = res.rows
+    } catch {
+      ElMessage.error('加载客户意向失败')
+    } finally {
+      recommendLoading.value = false
+    }
+  }
 
 function statusType(s) {
   return { pending_follow: 'info', contacting: 'warning', deal: 'success', lost: 'danger' }[s] || 'info'
@@ -434,6 +524,12 @@ async function openFollow(row) {
   follows.value = await api.getFollowUps(row.id)
   followVisible.value = true
 }
+
+function openHighlight(row) {
+  hlCustomerId.value = row.id
+  hlCustomerName.value = row.name
+  hlVisible.value = true
+}
 async function addFollow() {
   if (!followText.value.trim()) { ElMessage.warning('请填写跟进内容'); return }
   await api.addFollowUp(followCustomerId.value, followText.value.trim())
@@ -522,6 +618,16 @@ onMounted(() => { refreshMD() })
   color: #874d00;
   font-size: 13px;
   line-height: 1.5;
+}
+.rec-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.rec-count {
+  color: #909399;
+  font-size: 13px;
 }
 /* 生日关怀高亮行：暖金色背景，作用于 el-table 内部 td */
 :deep(tr.birthday-hl > td) {

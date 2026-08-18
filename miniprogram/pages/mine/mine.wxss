@@ -10,6 +10,7 @@
   padding: 28rpx 0; border-bottom: 2rpx solid #F0F2F5;
 }
 .menu-ico { width: 40rpx; height: 40rpx; margin-right: 20rpx; flex-shrink: 0; }
+.menu-emoji { width: 40rpx; height: 40rpx; margin-right: 20rpx; flex-shrink: 0; font-size: 34rpx; line-height: 40rpx; text-align: center; }
 .menu-label { flex: 1; font-size: 30rpx; color: #333; }
 .menu-item:last-child { border-bottom: none; }
 

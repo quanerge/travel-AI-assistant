@@ -32,6 +32,7 @@ module.exports = {
     confirmed: '已确认',
     pending_deposit: '待付定金',
     deposit_received: '定金已收',
+    balance_pending: '待付尾款',
     success: '报名成功',
     completed: '完成'
   }

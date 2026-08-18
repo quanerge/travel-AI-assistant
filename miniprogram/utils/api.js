@@ -112,11 +112,28 @@ const api = {
   getReviews(routeId, page = 1) {
     return useMock ? mock.getReviews(routeId) : request('/reviews?route_id=' + routeId + '&page=' + page)
   },
+  // AI 亮点解读（公开端点：读线路缓存或即时生成并缓存，无需登录）
+  getRouteHighlight(id) {
+    return useMock ? Promise.resolve(null) : request('/routes/' + id + '/highlight')
+  },
   submitReview(payload) {
     return useMock ? mock.submitReview(payload) : request('/reviews', 'POST', payload)
   },
   getMyReviews() {
     return useMock ? mock.getMyReviews() : request('/reviews/mine')
+  },
+  // 线路亮点自动分发：客户意向行为（收藏/咨询/下单）自动推送，确认接受后回写状态（顾问零操作）
+  pushRecommend(routeId) {
+    return useMock ? mock.pushRecommend(routeId) : request('/recommend', 'POST', { route_id: routeId })
+  },
+  getMyRecommends() {
+    return useMock ? mock.getMyRecommends() : request('/recommend/mine')
+  },
+  acceptRecommend(id) {
+    return useMock ? Promise.resolve({ id, status: 'accepted' }) : request('/recommend/' + id + '/accept', 'POST', {})
+  },
+  declineRecommend(id) {
+    return useMock ? Promise.resolve({ id, status: 'declined' }) : request('/recommend/' + id + '/decline', 'POST', {})
   },
   // 晒图上传：wx.uploadFile 到用户鉴权端点；mock 模式直接返回占位图
   uploadReviewImage(filePath) {

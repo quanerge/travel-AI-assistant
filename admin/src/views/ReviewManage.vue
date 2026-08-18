@@ -56,7 +56,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="created_at" label="提交时间" min-width="170" />
-      <el-table-column label="操作" width="190" fixed="right">
+      <el-table-column label="操作" width="190" fixed="right" class-name="op-col">
         <template #default="{ row }">
           <el-button v-if="row.status === 'approved'" size="small" type="warning"
             @click="changeStatus(row, 'hidden')">下架</el-button>

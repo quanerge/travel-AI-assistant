@@ -106,7 +106,7 @@ def upsert_customer_from_contact(db: Session, name: str = None, phone: str = Non
 
 @router.get("", response_model=list[CustomerOut])
 def list_customers(tag: str = None, follow_status: str = None, is_key: bool = None,
-                   include_deleted: bool = False,
+                   community: str = None, include_deleted: bool = False,
                    page: int = None, page_size: int = 50,
                    response: Response = None,
                    _admin=Depends(get_current_admin), db: Session = Depends(get_db)):
@@ -115,6 +115,8 @@ def list_customers(tag: str = None, follow_status: str = None, is_key: bool = No
         q = q.filter(or_(Customer.is_deleted == False, Customer.is_deleted.is_(None)))
     if tag:
         q = q.filter(Customer.tags.contains(tag))
+    if community:
+        q = q.filter(Customer.community == community)
     if follow_status:
         q = q.filter(Customer.follow_status == follow_status)
     if is_key is not None:

@@ -69,6 +69,34 @@
       <view class="sub">{{route.notice}}</view>
     </view>
 
+    <!-- AI 亮点解读（顾问/系统生成，自动展示，缓存优先） -->
+    <view class="card hl-card" wx:if="{{highlight}}">
+      <view class="row between" style="margin-bottom:12rpx;">
+        <view class="title hl-title">✨ AI 亮点解读</view>
+        <text class="sub hl-badge">{{highlight.generated ? '刚刚生成' : '顾问精选'}}</text>
+      </view>
+      <view wx:if="{{highlight.overview}}" class="hl-ov">{{highlight.overview}}</view>
+
+      <view wx:if="{{highlight.must_see.length}}" class="hl-sec">
+        <view class="hl-sec-t">🌟 必看景点</view>
+        <view wx:for="{{highlight.must_see}}" wx:key="*this" class="hl-chip">· {{item}}</view>
+      </view>
+      <view wx:if="{{highlight.food.length}}" class="hl-sec">
+        <view class="hl-sec-t">🍜 特色美食</view>
+        <view wx:for="{{highlight.food}}" wx:key="*this" class="hl-chip">· {{item}}</view>
+      </view>
+      <view wx:if="{{highlight.scenery.length}}" class="hl-sec">
+        <view class="hl-sec-t">🏞 绝美风光</view>
+        <view wx:for="{{highlight.scenery}}" wx:key="*this" class="hl-chip">· {{item}}</view>
+      </view>
+      <view wx:if="{{highlight.tips.length}}" class="hl-sec">
+        <view class="hl-sec-t">💡 出行贴士</view>
+        <view wx:for="{{highlight.tips}}" wx:key="*this" class="hl-chip">· {{item}}</view>
+      </view>
+      <view wx:if="{{highlight.warning}}" class="hl-warn">⚠️ {{highlight.warning}}</view>
+    </view>
+    <view wx:elif="{{highlightLoading}}" class="card hl-card hl-loading">✨ AI 亮点解读生成中…</view>
+
     <!-- 用户评价（功能①评价晒图） -->
     <view class="card">
       <view class="row between" style="margin-bottom:12rpx;">
@@ -95,7 +123,12 @@
 
   <!-- 底部操作栏 -->
   <view class="footer-bar">
-    <view class="fav" bindtap="toggleFav">{{favorited ? '★ 已收藏' : '☆ 收藏'}}</view>
+    <view class="fav {{favorited ? 'is-fav' : ''}}" bindtap="toggleFav" hover-class="fav-hover" hover-stay-time="80">
+      <view class="fav-heart">
+        <text class="fav-glyph">{{favorited ? '♥' : '♡'}}</text>
+      </view>
+      <text class="fav-label">{{favorited ? '已收藏' : '收藏'}}</text>
+    </view>
     <button class="btn btn-ghost" style="flex:1;" bindtap="goConsult">咨询</button>
     <button class="btn btn-ghost" style="flex:1;" open-type="share">分享</button>
     <button class="btn btn-accent btn-block" style="flex:2;" bindtap="goSignup">立即报名</button>

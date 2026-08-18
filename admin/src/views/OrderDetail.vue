@@ -18,7 +18,9 @@
           <el-descriptions-item label="人数">{{ o.person_count }}</el-descriptions-item>
           <el-descriptions-item label="出发日">{{ o.departure_date || '—' }}</el-descriptions-item>
           <el-descriptions-item label="总额(元)">{{ o.total_amount != null ? o.total_amount : '—' }}</el-descriptions-item>
-          <el-descriptions-item label="定金">{{ o.deposit_paid ? '已收' : '未收' }}</el-descriptions-item>
+          <el-descriptions-item label="定金">{{ o.deposit_paid ? ('已收 ¥' + o.deposit_amount) : '未收' }}</el-descriptions-item>
+          <el-descriptions-item label="应收尾款" v-if="o.balance_amount > 0">{{ o.balance_amount }}</el-descriptions-item>
+          <el-descriptions-item label="尾款状态" v-if="o.balance_amount > 0">{{ o.balance_paid ? '已收' : '未收' }}</el-descriptions-item>
           <el-descriptions-item label="下单时间" :span="2">{{ fmtTime(o.created_at) }}</el-descriptions-item>
           <el-descriptions-item label="备注" :span="2">{{ o.remark || '—' }}</el-descriptions-item>
         </el-descriptions>
@@ -32,13 +34,17 @@
         type="primary" :loading="acting" @click="act('confirm')"
       >确认订单</el-button>
       <el-button
-        v-if="o && (o.status === 'pending_confirm' || o.status === 'pending_deposit')"
+        v-if="o && (o.status === 'pending_confirm' || o.status === 'confirmed' || o.status === 'pending_deposit')"
         type="warning" :loading="acting" @click="act('deposit')"
       >确认定金</el-button>
       <el-button
         v-if="o && (o.status === 'confirmed' || o.status === 'deposit_received')"
         type="success" :loading="acting" @click="act('complete')"
       >完成</el-button>
+      <el-button
+        v-if="o && (o.status === 'deposit_received' || o.status === 'balance_pending') && o.balance_amount > 0 && !o.balance_paid"
+        type="warning" :loading="acting" @click="act('balance')"
+      >收尾款</el-button>
     </template>
   </el-dialog>
 </template>
@@ -62,6 +68,7 @@ const statusMap = {
   confirmed: ['', '已确认'],
   pending_deposit: ['warning', '待付定金'],
   deposit_received: ['success', '定金已收'],
+  balance_pending: ['warning', '待付尾款'],
   success: ['success', '报名成功'],
   completed: ['info', '完成']
 }
@@ -88,6 +95,7 @@ const act = async (type) => {
   try {
     if (type === 'confirm') await api.confirmOrder(props.orderId)
     else if (type === 'deposit') await api.confirmDeposit(props.orderId)
+    else if (type === 'balance') await api.confirmBalance(props.orderId)
     else if (type === 'complete') await api.completeOrder(props.orderId)
     ElMessage.success('操作成功')
     emit('updated')
