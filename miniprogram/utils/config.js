@@ -12,7 +12,7 @@ module.exports = {
   //     - 开发者工具模拟器（与后端同机）：可用 http://127.0.0.1:8000/api；
   //     - 正式发布：必须 https + ICP 备案域名，并在微信公众平台「开发设置-服务器域名」配置 request 合法域名。
   //   判断口诀：CRM 后台后端在哪个地址，这里就填哪个（结尾带 /api）。两边不一致是「注册失败 / CRM 看不到」的头号原因。
-  baseUrl: 'http://10.28.100.143:8000/api',
+  baseUrl: 'https://hitting-artificial-addresses-rounds.trycloudflare.com/api',  // ⚠️临时开发隧道(Cloudflare Quick Tunnel)->本地8000；URL每次重启随机，过期需重跑 start_tunnel.bat 并改回此处。正式发布改回已备案 https 域名。
   // 微信订阅消息模板 ID（P2 推送用）：在微信公众平台「订阅消息」申请模板，字段需含
   // 事项(thing1)、处理人(name2)、时间(time3)。留空则提交时不请求授权、也不推送。
   subscribeTemplateId: '',
