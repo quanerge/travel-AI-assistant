@@ -1,0 +1,77 @@
+/* pages/guideDetail/guideDetail.wxml —— 目的地攻略阅读（AI 原创改写优先，可折叠查看原文） */
+<view wx:if="{{guide}}" class="page gd">
+  <view class="gd-head">
+    <view class="gd-title">{{guide.mode === 'ai' ? guide.ai_name : guide.title}}</view>
+    <view class="gd-src-row" bindtap="copyLink">
+      <text class="gd-src-tag">{{guide.mode === 'ai' ? 'AI 整理' : '维基导游'}}</text>
+      <text class="gd-src-txt">{{guide.source_url}}</text>
+      <text class="gd-copy">复制链接</text>
+    </view>
+  </view>
+
+  <!-- ===== AI 原创改写版（公众号风） ===== -->
+  <block wx:if="{{guide.mode === 'ai'}}">
+    <view class="gd-body">
+      <view class="gd-sum" wx:if="{{guide.ai_summary}}">{{guide.ai_summary}}</view>
+
+      <view wx:if="{{guide.ai_highlights.length}}" class="gd-sec">
+        <view class="gd-h">✨ 亮点推荐</view>
+        <view class="gd-chip" wx:for="{{guide.ai_highlights}}" wx:key="*this">{{item}}</view>
+      </view>
+
+      <view wx:if="{{guide.ai_plan.length}}" class="gd-sec">
+        <view class="gd-h">🗺 玩法参考</view>
+        <view class="gd-day" wx:for="{{guide.ai_plan}}" wx:key="day_no">
+          <view class="gd-day-t">Day{{item.day_no}} · {{item.title}}</view>
+          <view class="gd-p">{{item.content}}</view>
+          <view class="gd-day-meta">
+            <text wx:if="{{item.meals}}">🍚 {{item.meals}}</text>
+            <text wx:if="{{item.accommodation}}" style="margin-left:16rpx;">🏨 {{item.accommodation}}</text>
+            <text wx:if="{{item.traffic}}" style="margin-left:16rpx;">🚌 {{item.traffic}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="gd-sec" wx:if="{{guide.ai_budget || guide.ai_crowd}}">
+        <view class="gd-h">💡 出行参考</view>
+        <view class="gd-li"><text class="gd-dot">•</text><text class="gd-li-txt">预算：{{guide.ai_budget || '以实际为准'}}</text></view>
+        <view class="gd-li" wx:if="{{guide.ai_crowd}}"><text class="gd-dot">•</text><text class="gd-li-txt">适合人群：{{guide.ai_crowd}}</text></view>
+      </view>
+    </view>
+
+    <!-- 查看原文折叠区 -->
+    <view class="gd-raw-toggle" bindtap="toggleRaw">
+      <text>{{showRaw ? '收起维基导游原文' : '查看维基导游原文'}}</text>
+      <text class="gd-chev {{showRaw ? 'on' : ''}}">⌄</text>
+    </view>
+    <view wx:if="{{showRaw}}" class="gd-body">
+      <block wx:for="{{guide.raw_blocks}}" wx:key="index">
+        <view wx:if="{{item.type === 'heading'}}" class="gd-h">{{item.text}}</view>
+        <view wx:elif="{{item.type === 'list'}}" class="gd-li">
+          <text class="gd-dot">•</text>
+          <text class="gd-li-txt">{{item.text}}</text>
+        </view>
+        <view wx:else class="gd-p">{{item.text}}</view>
+      </block>
+    </view>
+  </block>
+
+  <!-- ===== 原文直读版（无 AI 改写时回退） ===== -->
+  <view wx:else class="gd-body">
+    <block wx:for="{{guide.raw_blocks}}" wx:key="index">
+      <view wx:if="{{item.type === 'heading'}}" class="gd-h">{{item.text}}</view>
+      <view wx:elif="{{item.type === 'list'}}" class="gd-li">
+        <text class="gd-dot">•</text>
+        <text class="gd-li-txt">{{item.text}}</text>
+      </view>
+      <view wx:else class="gd-p">{{item.text}}</view>
+    </block>
+  </view>
+
+  <view class="gd-legal">
+    内容基于维基导游（CC BY-SA）原创整理，AI 内容仅供参考，非本社售卖产品
+  </view>
+</view>
+
+<view wx:elif="{{loading}}" class="empty">加载中…</view>
+<view wx:else class="empty">攻略不存在</view>

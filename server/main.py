@@ -1,6 +1,7 @@
 # server/main.py
 import os
 import time
+import threading
 import logging
 from collections import defaultdict, deque
 from dotenv import load_dotenv
@@ -16,9 +17,9 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from database import engine, Base, migrate
+from database import engine, Base, migrate, SessionLocal
 import models  # noqa: ensure models registered
-from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat, ai, coupons, config, members, reviews, recommend
+from routers import routes, orders, consult, customers, admin, upload, banners, favorites, auth, users, chat, ai, coupons, config, members, reviews, recommend, recommend_routes
 
 # 应用版本（可通过环境变量 APP_VERSION 覆盖，便于灰度/环境标记；默认与需求说明书 V1.3 对齐）
 APP_VERSION = os.getenv("APP_VERSION", "V1.3")
@@ -140,6 +141,7 @@ app.include_router(config.router)    # 站点公开配置（顾问联系方式�
 app.include_router(members.router)    # 会员体系（激活 member 表）
 app.include_router(reviews.router)    # 线路评价晒图（功能①）
 app.include_router(recommend.router)   # 线路亮点自动分发 + 客户确认接受（顾问零操作）
+app.include_router(recommend_routes.router)  # 网络推荐线路（发现页：抓取 Wikivoyage + LLM 加工）
 
 # 本地上传的静态资源（封面图等）：/static/covers/xxx.jpg
 os.makedirs(upload.STATIC_DIR, exist_ok=True)
@@ -159,3 +161,34 @@ def root():
     if os.path.isdir(_ADMIN_DIST):
         return RedirectResponse("/ui/")
     return {"msg": "旅途管家 API", "docs": "/docs"}
+
+
+# ---------- 网络推荐线路定时抓取（每日一次，daemon 线程，零新依赖）----------
+# 启动后 10 分钟首次抓取（避开刚启动的 LLM 高并发），之后每 24 小时一次；
+# 无 LLM_API_KEY / 单条失败均安全降级，不阻塞主服务。
+_DAILY_CRAWL_SECONDS = 24 * 3600
+_FIRST_CRAWL_DELAY_SECONDS = int(os.getenv("RECOMMEND_CRAWL_FIRST_DELAY", "5"))
+
+
+def _recommend_crawl_loop():
+    time.sleep(_FIRST_CRAWL_DELAY_SECONDS)
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                stats = recommend_routes.crawl_recommend_routes(db)
+                logger.info("定时抓取推荐线路完成: %s", stats)
+            finally:
+                db.close()
+        except Exception as e:  # noqa: BLE001
+            logger.warning("定时抓取推荐线路失败（下次周期重试）: %s", e)
+        time.sleep(_DAILY_CRAWL_SECONDS)
+
+
+@app.on_event("startup")
+def _start_recommend_crawl():
+    threading.Thread(target=_recommend_crawl_loop, daemon=True, name="recommend-crawl").start()
+    logger.info(
+        "网络推荐线路定时抓取线程已启动（首次 %s 秒后，周期 %s 秒）",
+        _FIRST_CRAWL_DELAY_SECONDS, _DAILY_CRAWL_SECONDS,
+    )

@@ -1,0 +1,95 @@
+/* pages/discover/discover.wxss —— 公众号推文式单列大图卡 */
+.disc-banner {
+  background: linear-gradient(135deg, #0E9F6E, #4FC08D);
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 24rpx;
+  color: #fff;
+}
+.disc-title { font-size: 34rpx; font-weight: 700; margin-bottom: 8rpx; }
+.disc-sub { font-size: 24rpx; opacity: 0.92; line-height: 1.5; }
+
+/* 单列卡片：封面（16:9）+ 正文 */
+.disc-card {
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 封面容器（relative，徽标定位基准是它，不再是 scrim——修复重叠） */
+.disc-cover { position: relative; }
+.disc-cover-img { width: 100%; height: 360rpx; display: block; }
+.disc-ph {
+  width: 100%; height: 360rpx;
+  background: linear-gradient(135deg, #0E9F6E, #4FC08D);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 40rpx; font-weight: 700;
+}
+/* 徽标：相对 .disc-cover 左上角，独立于文字区，不压标题 */
+.disc-src-tag {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  z-index: 3;
+  background: rgba(229, 148, 43, 0.95);
+  color: #fff;
+  font-size: 20rpx;
+  padding: 4rpx 18rpx;
+  border-radius: 24rpx;
+  line-height: 1.4;
+}
+
+.disc-body { padding: 20rpx 24rpx 24rpx; }
+.disc-name {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.disc-sum {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: #6B7280;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.disc-tags {
+  margin-top: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.disc-tag {
+  font-size: 22rpx;
+  color: #0E9F6E;
+  background: #E7F6EF;
+  padding: 4rpx 18rpx;
+  border-radius: 24rpx;
+  line-height: 1.5;
+}
+.disc-tag-easy { color: #0E9F6E; background: #E7F6EF; }
+.disc-tag-normal { color: #0E9F6E; background: #E7F6EF; }
+.disc-tag-moderate { color: #B25E09; background: #FDF0DC; }
+.disc-tag-challenge { color: #C2410C; background: #FDEBE3; }
+
+/* 页面底部署名与免责 */
+.disc-legal {
+  margin-top: 8rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #9CA3AF;
+  line-height: 1.6;
+  padding-bottom: 16rpx;
+}
+
+/* 自定义 tabBar 固定定位，预留底部安全留白，避免内容被遮挡 */
+page { padding-bottom: calc(150rpx + env(safe-area-inset-bottom)); }

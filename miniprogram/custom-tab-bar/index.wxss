@@ -35,6 +35,14 @@
   margin-bottom: 6rpx;
 }
 
+.tab-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  line-height: 1;
+}
+
 .tab-text {
   font-size: 28rpx;
   line-height: 1.2;

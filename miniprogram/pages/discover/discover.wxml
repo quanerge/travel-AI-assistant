@@ -1,0 +1,29 @@
+<!-- pages/discover/discover.wxml —— 发现：目的地攻略（AI 原创改写公众号风，回退维基导游原文） -->
+<view class="page">
+  <view class="disc-banner">
+    <view class="disc-title">发现目的地攻略</view>
+    <view class="disc-sub">AI 原创整理的公众号风推荐 · 素材来自维基导游</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{list.length === 0}}" class="empty">
+    暂无攻略，稍后再来看看
+  </view>
+
+  <view class="disc-card" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+    <view class="disc-cover">
+      <view class="disc-ph">{{item.display_name}}</view>
+      <view class="disc-src-tag">维基导游</view>
+    </view>
+    <view class="disc-body">
+      <view class="disc-sum" wx:if="{{item.teaser}}">{{item.teaser}}</view>
+      <view class="disc-tags">
+        <text class="disc-tag" wx:if="{{item.has_ai}}">AI 整理</text>
+        <text class="disc-tag" wx:else>原文直读</text>
+        <text class="disc-tag">仅供参考</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="disc-legal">内容基于维基导游（CC BY-SA）原创整理，仅供出行参考，非本社售卖产品</view>
+</view>
