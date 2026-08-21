@@ -137,6 +137,19 @@ function wxLogin(payload) {
   }
   return Promise.resolve({ userId: 1, openid: openid })
 }
+
+// 微信手机号一键注册（演示模式）：无真实手机号，造一条占位档案供 UI 联调
+function wxPhoneRegister(payload) {
+  const openid = payload.openid || payload.code || ('mock_' + Date.now())
+  const phone = '13800000000'
+  let c = mockCustomers.find(x => x.openid && x.openid === openid)
+  if (c) {
+    return Promise.resolve({ userId: c.userId, customer_id: c.customerId, nickname: c.nickName, phone: c.phone, birthday: c.birthday, wechat_no: c.wechat_no, already_registered: true })
+  }
+  c = { userId: mockCustomers.length + 1, customerId: mockCustomers.length + 1, nickName: '微信用户', phone: phone, birthday: null, wechat_no: null, openid }
+  mockCustomers.push(c)
+  return Promise.resolve({ userId: c.userId, customer_id: c.customerId, nickname: c.nickName, phone: c.phone, birthday: c.birthday, wechat_no: c.wechat_no, already_registered: false })
+}
 // 小程序"我的"页编辑资料（如生日/手机/微信）：按 customerId 更新本地记忆
 function updateCustomer(customerId, payload) {
   const c = mockCustomers.find(x => x.customerId === Number(customerId))
@@ -173,7 +186,11 @@ const coupons = [
   { id: 2, code: 'CPSUMMER', title: '夏季专线立减 300', amount: 300, condition: '满5000可用', applicable: 'all', expire_at: '2026-09-30T23:59:59', status: 'active' }
 ]
 const myCoupons = []  // 用户已领取的券（演示内存）
-function getCoupons() { return Promise.resolve(coupons.filter(c => c.status === 'active')) }
+function getCoupons() {
+  return Promise.resolve(coupons.filter(c => c.status === 'active').map(c =>
+    Object.assign({}, c, { claimed: !!myCoupons.find(m => m.code === c.code) })
+  ))
+}
 function claimCoupon(id) {
   const t = coupons.find(c => c.id === Number(id))
   if (!t) return Promise.resolve({ id: 0 })
@@ -283,7 +300,7 @@ function getMyRecommends() {
 module.exports = {
   getRoutes, getRouteDetail, getBanners, submitSignup, submitPlan,
   getOrders, getOrderDetail, deleteOrder, submitConsult, registerCustomer,
-  wxLogin, updateCustomer, toggleFavorite, getFavorites, routes,
+  wxLogin, wxPhoneRegister, updateCustomer, toggleFavorite, getFavorites, routes,
   getMyConsults, getConsultUnread, markConsultRead, toOrder, deleteConsult,
   getCoupons, claimCoupon, getMyCoupons,
   aiChat, getAiConversations, aiHistory,

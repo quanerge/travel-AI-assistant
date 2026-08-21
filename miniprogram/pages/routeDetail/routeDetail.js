@@ -8,6 +8,7 @@ Page({
     id: null,
     route: null,
     expandedDay: -1,
+    playingPoi: -1,        // 当前正在语音播报的景点 id（-1 表示无），用于按钮高亮/暂停切换
     favorited: false,
     reviews: [],
     avgRating: 0,
@@ -22,6 +23,9 @@ Page({
     api.getRouteDetail(id).then(r => {
       if (!r) { wx.showToast({ title: '线路不存在', icon: 'none' }); return }
       r = Object.assign({}, r, { cover: resolveCover(r.cover) })
+      // 网络推荐线路（发现页进入）：来源徽标 + CC BY-SA 署名 + 免责
+      r._isRecommend = r.source === 'recommend'
+      r._sourceUrl = r.source_url || ''
       // 图集为空时用封面兜底，保证轮播有内容
       if (!r.gallery || !r.gallery.length) r.gallery = r.cover ? [r.cover] : ['']
       this.setData({ route: r })
@@ -111,6 +115,60 @@ Page({
   goConsult() {
     this._pushRecommend()
     wx.navigateTo({ url: '/pages/consult/consult?routeId=' + this.data.id })
+  },
+
+  // —— 逐景点语音播报（路线 B：后端预生成 mp3，InnerAudioContext 播放，不依赖微信插件）——
+  playPoi(e) {
+    const poiId = e.currentTarget.dataset.poiId
+    const routeId = this.data.id
+    // 点正在播的同一景点 -> 暂停并复位
+    if (this.data.playingPoi === poiId) {
+      this._stopAudio()
+      this.setData({ playingPoi: -1 })
+      return
+    }
+    this._stopAudio()
+    this.setData({ playingPoi: poiId })
+    // 首次点击由后端触发 TTS 生成并缓存；后续直接命中静态 mp3。
+    api.getPoiAudio(routeId, poiId).then(res => {
+      if (!res || !res.audio_url) {
+        this.setData({ playingPoi: -1 })
+        wx.showToast({ title: '语音暂不可用', icon: 'none' })
+        return
+      }
+      const url = resolveCover(res.audio_url)  // 补全后端域名前缀
+      const ctx = this._audio()
+      if (ctx.offEnded) ctx.offEnded()
+      ctx.onEnded(() => this.setData({ playingPoi: -1 }))
+      if (ctx.offError) ctx.offError()
+      ctx.onError(() => {
+        this.setData({ playingPoi: -1 })
+        wx.showToast({ title: '播放失败', icon: 'none' })
+      })
+      ctx.src = url
+      ctx.play()
+    }).catch(() => {
+      this.setData({ playingPoi: -1 })
+      wx.showToast({ title: '语音暂不可用', icon: 'none' })
+    })
+  },
+
+  _audio() {
+    if (!this._audioCtx) this._audioCtx = wx.createInnerAudioContext()
+    return this._audioCtx
+  },
+
+  _stopAudio() {
+    if (this._audioCtx) {
+      try { this._audioCtx.stop() } catch (e) {}
+      if (this._audioCtx.offEnded) this._audioCtx.offEnded()
+    }
+  },
+
+  onHide() { this._stopAudio(); this.setData({ playingPoi: -1 }) },
+  onUnload() {
+    this._stopAudio()
+    if (this._audioCtx) { try { this._audioCtx.destroy() } catch (e) {} this._audioCtx = null }
   },
 
   // 分享卡片（需求 14 / 7.8）：好友点击可直达线路详情

@@ -10,6 +10,32 @@
 .day-title { font-weight: 600; }
 .day-body { margin-top: 12rpx; padding-left: 8rpx; }
 
+/* 网络推荐来源标识（发现页进入） */
+.src-banner {
+  display: flex;
+  align-items: center;
+  background: #FFF6EA;
+  border: 2rpx solid #F3D9B6;
+  border-radius: 12rpx;
+  padding: 12rpx 16rpx;
+  margin: 12rpx 0 16rpx;
+}
+.src-tag {
+  flex-shrink: 0;
+  background: #E5942B;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  margin-right: 12rpx;
+}
+.src-txt {
+  flex: 1;
+  font-size: 22rpx;
+  color: #8A6D3B;
+  line-height: 1.5;
+}
+
 .fav {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   width: 132rpx; color: #9aa3ab; font-size: 22rpx; line-height: 1;
@@ -61,3 +87,23 @@
 .hl-chip { font-size: 24rpx; color: #455A64; line-height: 1.75; }
 .hl-warn { font-size: 22rpx; color: #BF8F00; margin-top: 12rpx; line-height: 1.6; }
 .hl-loading { color: #0E9F6E; font-size: 24rpx; }
+
+/* 逐景点语音讲解（微信同声传译插件实时合成） */
+.poi-block { margin-top: 16rpx; padding-top: 14rpx; border-top: 2rpx dashed #E7F6EF; }
+.poi-h { font-size: 24rpx; font-weight: 600; color: #0E9F6E; margin-bottom: 10rpx; }
+.poi-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12rpx 0; border-bottom: 2rpx solid #F5F8F4;
+}
+.poi-item:last-child { border-bottom: none; }
+.poi-info { flex: 1; padding-right: 16rpx; display: flex; flex-direction: column; }
+.poi-name { font-size: 26rpx; font-weight: 600; color: #1F2D3D; }
+.poi-intro { font-size: 23rpx; color: #6B7280; line-height: 1.6; margin-top: 4rpx; }
+.poi-play {
+  flex: none; width: 72rpx; height: 72rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #E7F6EF; transition: all 0.2s ease;
+}
+.poi-play .poi-ico { font-size: 32rpx; line-height: 1; }
+.poi-play.on { background: var(--primary, #0E9F6E); }
+.poi-play:active { transform: scale(0.92); }

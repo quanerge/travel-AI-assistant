@@ -62,6 +62,10 @@ const api = {
   wxLogin(payload) {
     return useMock ? mock.wxLogin(payload) : request('/auth/wx-login', 'POST', payload)
   },
+  // 微信手机号一键注册（getPhoneNumber code -> 后端解真实手机号 -> 自动建客户并登录）
+  wxPhoneRegister(payload) {
+    return useMock ? mock.wxPhoneRegister(payload) : request('/auth/wx-phone-register', 'POST', payload)
+  },
   // 首页 Banner 轮播
   getBanners() {
     return useMock ? mock.getBanners() : request('/banners')
@@ -115,6 +119,17 @@ const api = {
   // AI 亮点解读（公开端点：读线路缓存或即时生成并缓存，无需登录）
   getRouteHighlight(id) {
     return useMock ? Promise.resolve(null) : request('/routes/' + id + '/highlight')
+  },
+  // 逐景点语音播报音频（路线 B：后端预生成 mp3，公开端点，无需登录）
+  getPoiAudio(routeId, poiId) {
+    return useMock ? Promise.resolve(null) : request('/routes/' + routeId + '/pois/' + poiId + '/audio')
+  },
+  // 网络推荐攻略（发现页：后端直抓 Wikivoyage 原文，不做 AI 加工；公开端点）
+  getRecommendRoutes() {
+    return useMock ? Promise.resolve([]) : request('/recommend-routes')
+  },
+  getRecommendGuide(id) {
+    return useMock ? Promise.resolve(null) : request('/recommend-routes/' + id)
   },
   submitReview(payload) {
     return useMock ? mock.submitReview(payload) : request('/reviews', 'POST', payload)

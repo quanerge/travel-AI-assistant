@@ -13,8 +13,14 @@
       <text class="sub">★ {{route.rating}}</text>
     </view>
 
-    <!-- 成团进度 -->
-    <view class="card">
+    <!-- 网络推荐来源标识（发现页进入）：CC BY-SA 署名 + 免责 -->
+    <view wx:if="{{route._isRecommend}}" class="src-banner">
+      <text class="src-tag">网络推荐</text>
+      <text class="src-txt">整理自维基导游（CC BY-SA），仅供灵感参考，非本社售卖产品</text>
+    </view>
+
+    <!-- 成团进度（网络推荐线路无成团概念，隐藏） -->
+    <view class="card" wx:if="{{!route._isRecommend}}">
       <view class="row between">
         <text class="sub">已报名 {{route.signup_count}} / 成团 {{route.group_size}} 人</text>
         <text class="{{route.signup_count >= route.group_size ? 'tag tag-success' : 'tag tag-danger'}}">
@@ -25,12 +31,12 @@
 
     <view class="row" style="margin:8rpx 0 16rpx;">
       <text class="sub">{{route.departure}}出发 · {{route.days}}天</text>
-      <text class="price" style="margin-left:auto;font-size:40rpx;">¥{{route.price}}</text>
+      <text class="price" style="margin-left:auto;font-size:40rpx;">{{route._isRecommend ? '参考推荐' : '¥' + route.price}}</text>
     </view>
 
-    <!-- 行程安排 -->
+    <!-- 行程安排（网络推荐线路展示为「玩法参考」） -->
     <view class="card">
-      <view class="title" style="margin-bottom:12rpx;">行程安排</view>
+      <view class="title" style="margin-bottom:12rpx;">{{route._isRecommend ? '玩法参考' : '行程安排'}}</view>
       <view class="day" wx:for="{{route.route_days}}" wx:key="day_no" bindtap="toggleDay" data-i="{{index}}">
         <view class="row between">
           <text class="day-title">Day{{item.day_no}} · {{item.title}}</text>
@@ -38,13 +44,26 @@
         </view>
         <view wx:if="{{expandedDay === index}}" class="day-body">
           <view class="sub">{{item.content}}</view>
+          <view wx:if="{{item.pois.length}}" class="poi-block">
+            <view class="poi-h">🎧 景点语音讲解</view>
+            <view wx:for="{{item.pois}}" wx:for-item="poi" wx:key="id" class="poi-item">
+              <view class="poi-info">
+                <text class="poi-name">{{poi.name}}</text>
+                <text class="poi-intro">{{poi.intro}}</text>
+              </view>
+              <view class="poi-play {{playingPoi === poi.id ? 'on' : ''}}"
+                    catchtap="playPoi" data-poi-id="{{poi.id}}">
+                <text class="poi-ico">{{playingPoi === poi.id ? '⏸' : '🔊'}}</text>
+              </view>
+            </view>
+          </view>
           <view class="sub">餐饮：{{item.meals}} ｜ 住宿：{{item.accommodation}} ｜ 交通：{{item.traffic}}</view>
         </view>
       </view>
     </view>
 
-    <!-- 费用说明 -->
-    <view class="card">
+    <!-- 费用说明（网络推荐线路无报价体系，隐藏） -->
+    <view class="card" wx:if="{{!route._isRecommend}}">
       <view class="title" style="margin-bottom:8rpx;">费用说明</view>
       <view class="sub">包含：{{route.fee_included}}</view>
       <view class="sub" style="margin-top:8rpx;">不含：{{route.fee_excluded}}</view>
@@ -131,7 +150,7 @@
     </view>
     <button class="btn btn-ghost" style="flex:1;" bindtap="goConsult">咨询</button>
     <button class="btn btn-ghost" style="flex:1;" open-type="share">分享</button>
-    <button class="btn btn-accent btn-block" style="flex:2;" bindtap="goSignup">立即报名</button>
+    <button class="btn btn-accent btn-block" style="flex:2;" bindtap="goSignup" wx:if="{{!route._isRecommend}}">立即报名</button>
   </view>
 </view>
 

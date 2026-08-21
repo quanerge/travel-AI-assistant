@@ -1,12 +1,16 @@
 # server/routers/routes.py
 import json
+import os
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
-from models import Route, RouteDay, AdminUser
+from models import Route, RouteDay, RoutePoi, AdminUser
 from schemas import RouteOut, RouteCreate, RouteUpdate, RouteDayCreate
 from routers.auth import get_current_admin
 from routers.ai import _build_highlight
+from routers.upload import STATIC_DIR
+from utils.llm import generate_poi_intro
+from utils.tts import synthesize
 from utils.pagination import paginate, set_pagination_headers
 
 router = APIRouter(prefix="/api/routes", tags=["routes"])
@@ -19,7 +23,9 @@ def list_routes(category: str = None, keyword: str = None,
                 intensity: str = None,
                 page: int = None, page_size: int = 50, response: Response = None,
                 db: Session = Depends(get_db)):
-    q = db.query(Route)
+    # 首页热门推荐/线路列表只展示可下单的自营线路（source='official'），
+    # 网络推荐攻略（source='recommend'）走独立端点 /api/recommend-routes，不混入。
+    q = db.query(Route).filter(Route.source != "recommend")
     if category and category != "全部":
         q = q.filter(Route.category == category)
     if keyword:
@@ -43,7 +49,12 @@ def list_routes(category: str = None, keyword: str = None,
 
 @router.get("/{route_id}", response_model=RouteOut)
 def get_route(route_id: int, db: Session = Depends(get_db)):
-    route = db.query(Route).filter(Route.id == route_id).first()
+    route = (
+        db.query(Route)
+        .options(joinedload(Route.route_days).joinedload(RouteDay.pois))
+        .filter(Route.id == route_id)
+        .first()
+    )
     if not route:
         raise HTTPException(404, "线路不存在")
     return route
@@ -140,3 +151,55 @@ def delete_route(route_id: int, _admin=Depends(get_current_admin),
 
 def _day_model(d: RouteDayCreate) -> RouteDay:
     return RouteDay(**d.model_dump())
+
+
+@router.post("/{route_id}/generate-poi", response_model=list)
+def generate_poi(route_id: int, _admin=Depends(get_current_admin),
+                db: Session = Depends(get_db)):
+    """后台/系统触发：用 LLM 把该线路每天 route_day.content 拆成逐景点解说词。
+
+    幂等 upsert（先删旧 pois 再批量插入），结果随线路详情接口 GET /api/routes/{id} 返回，
+    供小程序逐景点语音播报。每条 intro 已由 LLM 控制在 ≤50 字以适配微信同声传译插件。
+    """
+    route = db.query(Route).filter(Route.id == route_id).first()
+    if not route:
+        raise HTTPException(404, "线路不存在")
+    result = []
+    for day in route.route_days:
+        db.query(RoutePoi).filter(RoutePoi.route_day_id == day.id).delete()
+        intros = generate_poi_intro(route.name, day.title, day.content or "")
+        for i, p in enumerate(intros):
+            db.add(RoutePoi(route_day_id=day.id, seq=i, name=p["name"], intro=p["intro"]))
+            result.append({"day_no": day.day_no, "name": p["name"], "intro": p["intro"]})
+    db.commit()
+    return result
+
+
+@router.get("/{route_id}/pois/{poi_id}/audio")
+def get_poi_audio(route_id: int, poi_id: int, db: Session = Depends(get_db)):
+    """公开端点（小程序用，无需登录）：返回某景点解说词音频的相对 URL。
+
+    首次访问：用 TTS 把 poi.intro 合成为 mp3 落盘到 server/static/audio/{poi_id}.mp3 并缓存；
+    后续访问：文件已存在直接返回（幂等、可刷新）。
+    无 TTS 密钥 / 合成失败 / intro 为空时返回 404（前端据此禁用 🔊 按钮）。
+    替代路线 B：原同声传译插件方案因小程序未备案无法添加，故改用后端预生成 mp3。
+    """
+    poi = db.query(RoutePoi).filter(RoutePoi.id == poi_id).first()
+    if not poi:
+        raise HTTPException(404, "景点不存在")
+    # 归属校验：poi 必须属于该 route（经 route_day 关联），防越权/错配
+    day = db.query(RouteDay).filter(RouteDay.id == poi.route_day_id).first()
+    if not day or day.route_id != route_id:
+        raise HTTPException(404, "景点不属于该线路")
+    if not poi.intro or not poi.intro.strip():
+        raise HTTPException(404, "该景点暂无语音解说词")
+    audio_dir = os.path.join(STATIC_DIR, "audio")
+    os.makedirs(audio_dir, exist_ok=True)
+    audio_path = os.path.join(audio_dir, f"{poi_id}.mp3")
+    if not os.path.exists(audio_path):
+        mp3 = synthesize(poi.intro)
+        if not mp3:
+            raise HTTPException(404, "语音合成暂不可用（未配置 TTS 密钥或网络异常）")
+        with open(audio_path, "wb") as f:
+            f.write(mp3)
+    return {"audio_url": f"/static/audio/{poi_id}.mp3"}
