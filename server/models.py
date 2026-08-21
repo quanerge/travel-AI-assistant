@@ -75,6 +75,9 @@ class Route(Base):
     suitable_age_min = Column(Integer, nullable=True)        # 适合年龄下限
     suitable_age_max = Column(Integer, nullable=True)        # 适合年龄上限
     ai_highlight = Column(Text, nullable=True)                # AI 亮点解读缓存（JSON 字符串：顾问/小程序读取，避免每次调 LLM）
+    # —— 线路来源（网络推荐功能）：official=本社自营，recommend=从 Wikivoyage 等公开源抓取并经 LLM 加工 ——
+    source = Column(String(16), default="official")
+    source_url = Column(String(255), nullable=True)           # 来源条目链接（CC BY-SA 署名用）
     created_at = Column(DateTime, default=datetime.utcnow)
     route_days = relationship(
         "RouteDay", back_populates="route",
@@ -93,6 +96,39 @@ class RouteDay(Base):
     accommodation = Column(String(128), nullable=True)
     traffic = Column(String(64), nullable=True)
     route = relationship("Route", back_populates="route_days")
+    pois = relationship(
+        "RoutePoi", back_populates="day",
+        cascade="all, delete-orphan", order_by="RoutePoi.seq"
+    )
+
+
+class RoutePoi(Base):
+    """逐景点语音解说词：由 LLM 从 route_day.content 自动拆出并缓存，供小程序逐景点语音播报。
+    intro 控制 ≤50 字以适配微信同声传译插件 textToSpeech 的长度限制。"""
+    __tablename__ = "route_poi"
+    id = Column(Integer, primary_key=True, index=True)
+    route_day_id = Column(Integer, ForeignKey("route_day.id"), nullable=False, index=True)
+    seq = Column(Integer, default=0)
+    name = Column(String(128))
+    intro = Column(Text, nullable=True)
+    day = relationship("RouteDay", back_populates="pois")
+
+
+class WikiGuide(Base):
+    """目的地攻略原文（发现页）：直接照搬 Wikivoyage 公开条目纯文本 + AI 原创改写版推荐。
+
+    内容为 CC BY-SA 授权，展示侧须保留「来源：维基导游」+ 条目链接（source_url）。
+    ai_json 为 LLM 基于原文事实**原创改写**的公众号风推荐文（不复制原文表达），
+    无 key/失败时为 NULL，前端自动回退展示原文。
+    """
+    __tablename__ = "wiki_guide"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(128), unique=True, index=True)   # 目的地名（条目名）
+    content = Column(Text, nullable=True)                   # 攻略原文纯文本（explaintext）
+    source_url = Column(String(255), nullable=True)         # 维基导游条目链接（署名用）
+    ai_json = Column(Text, nullable=True)                   # AI 原创改写 JSON（name/summary/highlights/daily...）
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class Order(Base):

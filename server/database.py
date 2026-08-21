@@ -70,15 +70,34 @@ def migrate():
         ("route", "suitable_age_min", "INTEGER"),
         ("route", "suitable_age_max", "INTEGER"),
         ("route", "ai_highlight", "TEXT"),
+        # 网络推荐线路功能：来源标记 + 署名链接
+        ("route", "source", "VARCHAR(16)"),
+        ("route", "source_url", "VARCHAR(255)"),
+        # 网络推荐攻略：AI 原创改写缓存（NULL 时前端回退原文）
+        ("wiki_guide", "ai_json", "TEXT"),
         # 功能4：会员体系
         ("member", "level_name", "VARCHAR(32)"),
         ("member", "points", "INTEGER"),
         ("member", "total_points", "INTEGER"),
         ("member", "rights", "TEXT"),
     ]
+    # 全新表（历史库 create_all 不会重建，需显式建表；IF NOT EXISTS 保证幂等）
+    creates = [
+        ('CREATE TABLE IF NOT EXISTS "route_poi" ('
+         'id INTEGER PRIMARY KEY, '
+         'route_day_id INTEGER, '
+         'seq INTEGER DEFAULT 0, '
+         'name VARCHAR(128), '
+         'intro TEXT)'),
+    ]
     conn = engine.raw_connection()
     try:
         cur = conn.cursor()
+        for sql in creates:
+            try:
+                cur.execute(sql)
+            except (OperationalError, sqlite3.OperationalError):
+                pass
         for table, col, ctype in alters:
             try:
                 # 表名加双引号转义（order 是 SQLite 保留字，必须引号；其余表加引号也安全）

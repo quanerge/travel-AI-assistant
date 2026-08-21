@@ -6,6 +6,44 @@ from datetime import datetime
 from utils.crypto import decrypt_phone
 
 
+class RoutePoiOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    route_day_id: int
+    seq: int = 0
+    name: str
+    intro: Optional[str] = None
+
+
+class WikiGuideOut(BaseModel):
+    """发现页目的地攻略（列表卡）。display_name/teaser 优先取 AI 原创改写，无则回退原文。"""
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    display_name: str = ""      # 卡片标题：AI 标题优先，回退目的地名
+    teaser: str = ""            # 卡片摘要：AI 推荐语优先，回退原文首段
+    has_ai: bool = False        # 是否已生成 AI 原创改写
+    source_url: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+
+class WikiGuideDetailOut(BaseModel):
+    """攻略详情：AI 原创改写优先展示；raw_blocks 为原文（供「查看原文」折叠）。"""
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    mode: str = "raw"                     # ai=有原创改写 / raw=仅原文
+    ai_name: str = ""
+    ai_summary: str = ""
+    ai_highlights: List[str] = []
+    ai_plan: List[dict] = []              # [{day_no,title,content,meals,accommodation,traffic}]
+    ai_budget: str = ""
+    ai_crowd: str = ""
+    raw_blocks: List[dict] = []           # 原文 [{type: heading|text|list, text}]
+    source_url: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+
 class RouteDayOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -15,6 +53,7 @@ class RouteDayOut(BaseModel):
     meals: Optional[str] = None
     accommodation: Optional[str] = None
     traffic: Optional[str] = None
+    pois: List[RoutePoiOut] = []   # 逐景点语音解说词（LLM 生成并缓存）
 
 
 class RouteDayCreate(BaseModel):
@@ -108,6 +147,8 @@ class RouteOut(BaseModel):
     daily_walk: Optional[int] = None
     suitable_age_min: Optional[int] = None
     suitable_age_max: Optional[int] = None
+    source: str = "official"                 # official=本社自营 / recommend=网络推荐
+    source_url: Optional[str] = None         # 来源条目链接（CC BY-SA 署名）
     route_days: List[RouteDayOut] = []
 
     @field_validator("gallery", mode="before")
@@ -122,6 +163,12 @@ class RouteOut(BaseModel):
             except (ValueError, TypeError):
                 return [s.strip() for s in v.split(",") if s.strip()]
         return v
+
+    @field_validator("source", mode="before")
+    @classmethod
+    def _default_source(cls, v):
+        """存量数据 source 列为 NULL（migrate ADD COLUMN 无默认值），统一归一为 official，避免序列化 500。"""
+        return v or "official"
 
 
 class MemberOut(BaseModel):
@@ -414,6 +461,7 @@ class CouponOut(BaseModel):
     expire_at: Optional[datetime] = None
     status: str = "unused"
     created_at: Optional[datetime] = None
+    claimed: bool = False  # 领券中心用：当前登录用户是否已领取该批次模板（非落库字段）
 
 
 class CouponCreate(BaseModel):
