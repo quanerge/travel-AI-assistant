@@ -9,6 +9,7 @@
 .cp-title { font-size: 30rpx; font-weight: 600; color: #1f2937; }
 .cp-sub { font-size: 22rpx; color: #9ca3af; margin-top: 6rpx; }
 .cp-btn { background: #0E9F6E; color: #fff; border-radius: 24rpx; font-size: 24rpx; }
+.cp-claimed { font-size: 24rpx; color: #9ca3af; background: #f3f4f6; border-radius: 24rpx; padding: 8rpx 24rpx; }
 .cp-tag { font-size: 22rpx; color: #9ca3af; }
 .cp-card--used, .cp-card--expired { opacity: 0.55; }
 .empty { text-align: center; color: #9ca3af; padding: 80rpx 0; font-size: 26rpx; }

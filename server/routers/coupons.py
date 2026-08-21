@@ -39,15 +39,35 @@ def _gen_batch_code() -> str:
 # ---------------- 小程序端（需登录）----------------
 
 @router.get("", response_model=list[CouponOut])
-def list_claimable_coupons(db: Session = Depends(get_db)):
-    """首页「领券中心」调用：返回可领取的券模板（user_id 为空、启用中、未过期）。"""
+def list_claimable_coupons(user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """首页「领券中心」调用：返回可领取的券模板（user_id 为空、启用中、未过期），
+    并标记 claimed 表示当前登录用户是否已领取该批次（已领则在中心列表显示「已领」）。"""
     rows = (
         db.query(Coupon)
         .filter(Coupon.user_id.is_(None), Coupon.status == "active")
         .order_by(Coupon.id.desc())
         .all()
     )
-    return [r for r in rows if not _is_expired(r)]
+    live = [r for r in rows if not _is_expired(r)]
+    if not live:
+        return []
+    # 当前用户已领取的券（unused/used 视为已持有），按 code / title 两路索引
+    owned = db.query(Coupon).filter(
+        Coupon.user_id == user.id,
+        Coupon.status.in_(["unused", "used"]),
+    ).all()
+    owned_by_code = {}
+    owned_by_title = {}
+    for c in owned:
+        if c.code:
+            owned_by_code[c.code] = True
+        else:
+            owned_by_title[c.title] = True
+    for r in live:
+        # 优先按批次 code 匹配；老数据 code 为空时退化为 title 匹配，
+        # 避免 SQLite 下 `code IN (NULL)` 永远不匹配导致 claimed 恒为 False。
+        r.claimed = bool(owned_by_code.get(r.code) if r.code else owned_by_title.get(r.title))
+    return live
 
 
 @router.get("/mine", response_model=list[CouponOut])
