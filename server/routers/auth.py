@@ -2,6 +2,7 @@
 # JWT 鉴权 + 微信小程序登录。
 import os
 import json
+import time
 import hashlib
 import datetime
 import urllib.request
@@ -155,6 +156,66 @@ def _wechat_openid(appid: str, secret: str, code: str) -> str | None:
         return None
 
 
+# ---------- 微信 access_token 缓存（client_credential 换取，7200s 有效期） ----------
+_access_token_cache = {"token": None, "exp": 0.0}
+
+
+def _get_access_token() -> str | None:
+    """用 appid+secret 换取小程序 access_token（带内存缓存，提前 60s 失效续期）。
+
+    用于 getuserphonenumber 等需 token 的接口。未配置 WECHAT_APPID/WECHAT_SECRET
+    时返回 None（演示模式不支持手机号授权，走手动表单注册）。
+    """
+    appid = os.getenv("WECHAT_APPID")
+    secret = os.getenv("WECHAT_SECRET")
+    if not appid or not secret:
+        return None
+    now = time.time()
+    if _access_token_cache["token"] and _access_token_cache["exp"] > now + 60:
+        return _access_token_cache["token"]
+    url = ("https://api.weixin.qq.com/cgi-bin/token"
+           f"?grant_type=client_credential&appid={appid}&secret={secret}")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "travel-ai/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        tok = data.get("access_token")
+        if tok:
+            _access_token_cache["token"] = tok
+            _access_token_cache["exp"] = now + float(data.get("expires_in", 7200))
+            return tok
+    except Exception:
+        return None
+    return None
+
+
+def _wechat_phone(phone_code: str) -> str | None:
+    """用 getPhoneNumber 返回的 code 换取真实手机号（purePhoneNumber）。
+
+    调 wxa/business/getuserphonenumber（需 access_token）。失败/未配置返回 None。
+    使用标准库 urllib，不引入额外依赖。
+    """
+    if not phone_code:
+        return None
+    token = _get_access_token()
+    if not token:
+        return None
+    url = ("https://api.weixin.qq.com/wxa/business/getuserphonenumber"
+           f"?access_token={token}")
+    body = json.dumps({"code": phone_code}).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=body,
+        headers={"Content-Type": "application/json", "User-Agent": "travel-ai/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        if data.get("errcode", 0) == 0:
+            return data.get("phone_info", {}).get("purePhoneNumber")
+    except Exception:
+        return None
+    return None
+
+
 def _resolve_openid(payload: "WxLoginIn", db: Session) -> str:
     """解析登录身份 openid，按优先级杜绝「客户端任意传 openid 即可冒充任意用户」：
 
@@ -184,6 +245,13 @@ class WxLoginIn(BaseModel):
     openid: str = None  # 客户端复用的稳定 openid（仅当服务端此前已签发才被信任）
 
 
+class WxPhoneRegisterIn(BaseModel):
+    code: str = None          # wx.login 的 code（后端据此权威解析 openid）
+    openid: str = None        # 客户端复用的稳定 openid（演示复用/兜底）
+    phone_code: str = None    # getPhoneNumber 返回的 code（后端换真实手机号）
+    nickname: str = None      # 可选，缺省「微信用户」
+
+
 @router.post("/wx-login")
 def wx_login(payload: WxLoginIn, db: Session = Depends(get_db)):
     """小程序静默登录：用 wx.login 拿到的 code 换取 openid。
@@ -211,6 +279,46 @@ def wx_login(payload: WxLoginIn, db: Session = Depends(get_db)):
         result["birthday"] = cust.birthday
         result["wechat_no"] = cust.wechat_no
     return result
+
+
+@router.post("/wx-phone-register")
+def wx_phone_register(payload: WxPhoneRegisterIn, db: Session = Depends(get_db)):
+    """微信手机号一键注册：用户点 getPhoneNumber 授权真实手机号 -> 后端解出号码 ->
+    复用 register_customer 逻辑创建/归并客户 -> 返回登录态（前端直接 app.login 跳走）。
+
+    与 wx-login 区别：wx-login 仅识别身份（openid），客户档案需另行注册；
+    本接口在用户一次点击授权手机号后即完成"建客户 + 登录"，实现免填表注册。
+    解析规则同 register_customer：同手机号已建档则复用并补绑微信身份、返回 already_registered。
+    """
+    openid = _resolve_openid(payload, db)
+    phone = _wechat_phone(payload.phone_code)
+    if not phone:
+        raise HTTPException(
+            status_code=400,
+            detail="微信手机号获取失败（未配置 WECHAT_APPID/SECRET 或授权异常），请改用表单注册",
+        )
+
+    # 复用客户注册逻辑（含手机号幂等归并、openid 绑定），避免重复实现
+    from routers.customers import register_customer, CustomerRegister
+    reg = register_customer(
+        CustomerRegister(
+            phone=phone,
+            nickname=payload.nickname or "微信用户",
+            openid=openid,
+        ),
+        db=db,
+    )
+    return {
+        "user_id": reg.user_id,
+        "openid": openid,
+        "token": create_user_token(reg.user_id),
+        "customer_id": reg.customer_id,
+        "nickname": reg.nickname,
+        "phone": reg.phone,
+        "birthday": reg.birthday,
+        "wechat_no": reg.wechat_no,
+        "already_registered": reg.already_registered,
+    }
 
 
 @router.get("/me")

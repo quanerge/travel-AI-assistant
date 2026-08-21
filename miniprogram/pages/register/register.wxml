@@ -22,10 +22,6 @@
       <text class="label">旅行偏好</text>
       <input class="input" placeholder="选填，如：亲子 / 摄影 / 美食" value="{{form.travel_preference}}" data-field="travel_preference" bindinput="input" />
     </view>
-    <view class="field">
-      <text class="label">预算区间</text>
-      <input class="input" placeholder="选填，如：3000-5000" value="{{form.budget_range}}" data-field="budget_range" bindinput="input" />
-    </view>
     <picker mode="date" value="{{form.birthday}}" start="1950-01-01" end="2015-12-31" bindchange="onBirthdayChange">
       <view class="field">
         <text class="label">生日</text>
@@ -34,6 +30,9 @@
     </picker>
   </view>
 
-  <button class="btn btn-primary btn-block" loading="{{submitting}}" bindtap="submit">注册并登录</button>
+  <view class="btn-row">
+    <button class="btn btn-primary wx-phone-btn" loading="{{submitting}}" open-type="getPhoneNumber" bindgetphonenumber="onGetPhone">微信手机号一键注册</button>
+    <button class="btn btn-ghost" loading="{{submitting}}" bindtap="submit">注册并登录</button>
+  </view>
   <view style="height:40rpx;"></view>
 </view>
